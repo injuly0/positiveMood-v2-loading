@@ -17,7 +17,7 @@
   /* 默认全部透明不可见 */
   opacity: 0; 
   /* 核心动效：当透明度发生变化时，用 0.5秒 平滑过渡 */
-  transition: opacity 0.5s ease-in-out; 
+  transition: opacity 0.2s ease-in-out; 
   max-width: 80%; 
   object-fit: contain;
 }

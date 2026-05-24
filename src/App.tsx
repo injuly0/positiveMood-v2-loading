@@ -1,13 +1,20 @@
-import VlogLoader from './components/VlogLoader/VlogLoader'; // 引入你的组件
-import './App.css'; // 保留全局样式
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import InitializationPage from './pages/InitializationPage';
+import RecordEntryPage from './pages/RecordEntryPage';
+import './App.css';
 
 function App() {
   return (
-    <div className="app-container">
-      {/* 直接在根组件渲染你的加载器 */}
-      <VlogLoader /> 
-    </div>
-  )
+    <Router>
+      <Routes>
+        {/* 默认访问根路径时，挂载初始化加载页 */}
+        <Route path="/" element={<InitializationPage />} />
+        
+        {/* 发生路由跳转时，卸载加载页，挂载记录页 */}
+        <Route path="/record" element={<RecordEntryPage />} />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;

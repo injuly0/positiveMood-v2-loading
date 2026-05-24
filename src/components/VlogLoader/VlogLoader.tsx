@@ -1,6 +1,5 @@
-// VlogLoader.tsx
 import React, { useState, useEffect } from 'react';
-import './VlogLoader.css'; // 引入对应的CSS文件
+import './VlogLoader.css';
 
 const UI_FRAMES = [
   '/loading-ui/google-search_untitled.png',
@@ -11,18 +10,30 @@ const UI_FRAMES = [
   '/loading-ui/instagram-dm-received_untitled.png'
 ];
 
-const VlogLoader: React.FC = () => {
+// 定义组件接收的属性接口，明确向父组件索要一个回调函数
+interface VlogLoaderProps {
+  onComplete: () => void; 
+}
+
+export default function VlogLoader({ onComplete }: VlogLoaderProps) {
   const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(0);
 
   useEffect(() => {
-    // 设置定时器，每 1500 毫秒执行一次状态更新
     const timer = setInterval(() => {
-      setCurrentFrameIndex((prevIndex) => (prevIndex + 1) % UI_FRAMES.length);
+      setCurrentFrameIndex((prevIndex) => {
+        // 判断是否到达最后一张图片
+        if (prevIndex === UI_FRAMES.length - 1) {
+          clearInterval(timer);
+          // 触发父组件传入的函数，发送状态提升信号
+          onComplete(); 
+          return prevIndex;
+        }
+        return prevIndex + 1;
+      });
     }, 1000);
 
-    // 组件卸载时清理定时器，防止内存泄漏
     return () => clearInterval(timer);
-  }, []);
+  }, [onComplete]);
 
   return (
     <div className="vlog-loader-container">
@@ -35,9 +46,7 @@ const VlogLoader: React.FC = () => {
           className={`frame-image ${index === currentFrameIndex ? 'active' : ''}`}
         />
       ))}
-      
     </div>
   );
 };
 
-export default VlogLoader;
