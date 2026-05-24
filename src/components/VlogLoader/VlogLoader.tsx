@@ -18,7 +18,7 @@ const VlogLoader: React.FC = () => {
     // 设置定时器，每 1500 毫秒执行一次状态更新
     const timer = setInterval(() => {
       setCurrentFrameIndex((prevIndex) => (prevIndex + 1) % UI_FRAMES.length);
-    }, 1500);
+    }, 1000);
 
     // 组件卸载时清理定时器，防止内存泄漏
     return () => clearInterval(timer);
