@@ -1,0 +1,30 @@
+/* VlogLoader.css */
+
+.vlog-loader-container {
+  /* 相对定位，作为内部绝对定位图片的参照物 */
+  position: relative; 
+  width: 100%;
+  /* 高度可以根据你实际 UI 的需要调整，确保容器能撑开 */
+  height: 200px; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.frame-image {
+  /* 绝对定位，让所有图片全部叠在同一个位置 */
+  position: absolute;
+  /* 默认全部透明不可见 */
+  opacity: 0; 
+  /* 核心动效：当透明度发生变化时，用 0.5秒 平滑过渡 */
+  transition: opacity 0.5s ease-in-out; 
+  max-width: 80%; 
+  object-fit: contain;
+}
+
+/* 只有挂载了 active 类的图片，透明度才变成 1 (完全可见) */
+.frame-image.active {
+  opacity: 1;
+  /* 确保当前显示的图片在最上层 */
+  z-index: 1; 
+}
