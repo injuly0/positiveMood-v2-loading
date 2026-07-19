@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import InitializationPage from './pages/InitializationPage';
 import RecordEntryPage from './pages/RecordEntryPage';
 import QuestionSelectionPage from './pages/QuestionSelectionPage';
+import QuestionAnswerPage from './pages/QuestionAnswerPage';
 import './App.css';
 
 function App() {
@@ -15,6 +16,8 @@ function App() {
         <Route path="/record" element={<RecordEntryPage />} />
 
         <Route path="/question-selection" element={<QuestionSelectionPage />} />
+
+        <Route path="/question-answer" element={<QuestionAnswerPage />} />
       </Routes>
     </Router>
   );
