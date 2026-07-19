@@ -4,3 +4,5 @@
 # 2.project-implement-describ.md文件
 文件内容：描述了项目里的模块划分，总共分为五个模块，对应五个大容器。此文件描述了每个容器的负责范围
 包括以下容器：InitializationPage 初始化页面 （加载容器），RecordEntryPage (记录容器)，QuestionSelectionPage (问题生成与选择容器)，QuestionAnswerePage (问题回答容器),DisplayArchivePage (存储与展示容器)
+# 3.question-selection-page-design.md文件
+文件内容：QuestionSelectionPage 的详细设计方案，包括组件树、数据流、状态机、Zustand Store 扩展、Fallback 默认问题集、以及关键交互规则
