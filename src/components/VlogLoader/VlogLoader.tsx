@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './VlogLoader.css';
 
 const UI_FRAMES = [
@@ -17,6 +17,7 @@ interface VlogLoaderProps {
 
 export default function VlogLoader({ onComplete }: VlogLoaderProps) {
   const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(0);
+  const hasCompleted = useRef(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -24,8 +25,6 @@ export default function VlogLoader({ onComplete }: VlogLoaderProps) {
         // 判断是否到达最后一张图片
         if (prevIndex === UI_FRAMES.length - 1) {
           clearInterval(timer);
-          // 触发父组件传入的函数，发送状态提升信号
-          onComplete(); 
           return prevIndex;
         }
         return prevIndex + 1;
@@ -33,7 +32,15 @@ export default function VlogLoader({ onComplete }: VlogLoaderProps) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [onComplete]);
+  }, []);
+
+  // 在渲染结束后通过 effect 触发导航，避免在 render 阶段更新 Router
+  useEffect(() => {
+    if (currentFrameIndex === UI_FRAMES.length - 1 && !hasCompleted.current) {
+      hasCompleted.current = true;
+      onComplete();
+    }
+  }, [currentFrameIndex, onComplete]);
 
   return (
     <div className="vlog-loader-container">
