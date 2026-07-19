@@ -1,6 +1,6 @@
 export const fetchQuestionFromLLM = async (text: string) => {
   // 模拟网络延迟 1.5 秒
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   // 简单的 Mock 逻辑
   return {
