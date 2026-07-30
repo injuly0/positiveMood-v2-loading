@@ -1,0 +1,234 @@
+.initialization-page {
+  --scene-heading-font: "Karla", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --scene-heading-weight: 800;
+  --scene-heading-style: italic;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #2f211b;
+}
+
+.home-scene {
+  position: relative;
+  width: min(100vw, calc(100vh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  container-type: inline-size;
+  isolation: isolate;
+  background: #ead1c1;
+}
+
+.home-scene__image {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  opacity: 0;
+  transform: scale(1.006);
+  transition:
+    opacity 1.2s cubic-bezier(.32, .72, 0, 1),
+    transform 1.2s cubic-bezier(.32, .72, 0, 1);
+  pointer-events: none;
+  user-select: none;
+}
+
+.home-scene__image--initial {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.home-scene[data-scene-state="record"] .home-scene__image--initial,
+.home-scene[data-scene-state="archive"] .home-scene__image--initial {
+  opacity: 0;
+}
+
+.home-scene[data-scene-state="record"] .home-scene__image--record,
+.home-scene[data-scene-state="archive"] .home-scene__image--archive {
+  opacity: 1;
+  transform: scale(1.001);
+  transition-duration: 900ms;
+}
+
+.home-scene__warmth {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  background:
+    radial-gradient(circle at 70% 72%, rgb(213 162 113 / 12%), transparent 27%),
+    radial-gradient(circle at center, transparent 58%, rgb(57 34 23 / 13%) 100%);
+  transition: opacity 900ms cubic-bezier(.32, .72, 0, 1);
+  pointer-events: none;
+}
+
+.home-scene[data-scene-state="record"] .home-scene__warmth,
+.home-scene[data-scene-state="archive"] .home-scene__warmth {
+  opacity: 1;
+}
+
+.home-scene__heading {
+  position: absolute;
+  z-index: 3;
+  top: 14.0741%;
+  left: 50%;
+  width: auto;
+  max-width: 47%;
+  margin: 0;
+  color: #fff;
+  font-family: var(--scene-heading-font);
+  font-size: clamp(18px, 2.7778cqw, 40px);
+  font-weight: var(--scene-heading-weight);
+  font-style: var(--scene-heading-style);
+  line-height: 1.175;
+  letter-spacing: 0;
+  text-align: left;
+  text-shadow: 0 2px 18px rgb(60 35 24 / 22%);
+  white-space: nowrap;
+  transition: opacity 350ms ease;
+}
+
+.home-scene__hotspot {
+  position: absolute;
+  z-index: 4;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  outline: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.home-scene__hotspot--archive {
+  top: 2.2222%;
+  left: 4.0972%;
+  width: 25.1389%;
+  height: 85.8025%;
+  border-radius: 42% 42% 8px 8px;
+}
+
+.home-scene__hotspot--record {
+  top: 66.1%;
+  left: 60.2%;
+  width: 21.6%;
+  height: 13.5%;
+  border-radius: 50%;
+}
+
+.home-scene__hotspot::after {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  border: 1px solid transparent;
+  border-radius: inherit;
+  transition:
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.home-scene__hotspot:focus-visible::after {
+  border-color: rgb(255 255 255 / 86%);
+  box-shadow:
+    0 0 0 3px rgb(85 55 37 / 38%),
+    0 0 28px rgb(255 240 214 / 42%);
+}
+
+.home-scene__hotspot-label {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  padding: 0.45em 0.8em;
+  border: 1px solid rgb(255 255 255 / 34%);
+  border-radius: 999px;
+  color: #fffaf4;
+  background: rgb(49 29 21 / 42%);
+  box-shadow: 0 5px 22px rgb(45 25 16 / 18%);
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-size: clamp(10px, 0.9cqw, 13px);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 6px);
+  transition:
+    opacity 260ms ease,
+    transform 260ms ease;
+  pointer-events: none;
+}
+
+.home-scene__hotspot--archive .home-scene__hotspot-label {
+  bottom: 14%;
+}
+
+.home-scene__hotspot:is(:hover, :focus-visible) .home-scene__hotspot-label {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.home-scene__instruction {
+  position: absolute;
+  right: 3.2%;
+  bottom: 3.6%;
+  z-index: 3;
+  margin: 0;
+  color: rgb(80 57 45 / 60%);
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-size: clamp(10px, 0.83cqw, 12px);
+  letter-spacing: 0.12em;
+  text-shadow: 0 1px 8px rgb(255 255 255 / 50%);
+}
+
+.home-scene__status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .home-scene__instruction::before {
+    content: "轻触聚焦，再次进入";
+    font-size: inherit;
+  }
+
+  .home-scene__instruction {
+    font-size: 0;
+  }
+
+  .home-scene__hotspot-label {
+    opacity: 0;
+  }
+
+  .home-scene[data-scene-state="record"] .home-scene__hotspot--record .home-scene__hotspot-label,
+  .home-scene[data-scene-state="archive"] .home-scene__hotspot--archive .home-scene__hotspot-label {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (max-aspect-ratio: 4 / 5) {
+  .home-scene__heading {
+    max-width: 48%;
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-scene__image,
+  .home-scene__warmth,
+  .home-scene__hotspot-label {
+    transition-duration: 120ms !important;
+  }
+}

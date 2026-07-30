@@ -6,3 +6,5 @@
 包括以下容器：InitializationPage 初始化页面 （加载容器），RecordEntryPage (记录容器)，QuestionSelectionPage (问题生成与选择容器)，QuestionAnswerePage (问题回答容器),DisplayArchivePage (存储与展示容器)
 # 3.question-selection-page-design.md文件
 文件内容：QuestionSelectionPage 的详细设计方案，包括组件树、数据流、状态机、Zustand Store 扩展、Fallback 默认问题集、以及关键交互规则
+# 4.question-answer-page-design/question-answer-page-design.md文件
+文件内容：QuestionAnswerPage 的详细设计方案，包括组件树、ContextViewer/ResponseEditor 子组件职责、数据流与状态机、Zustand Store 扩展（userAnswer/answeredAt/crystallizing）、结晶动画的 Layout 覆盖层方案（跨路由平滑过渡）、引导文案按框架映射、路由嵌套结构变更、以及边界情况处理

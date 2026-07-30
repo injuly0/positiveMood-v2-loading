@@ -1,0 +1,137 @@
+/* ============================================================
+   结晶动画覆盖层 — 总时长 ~2.0s
+
+   时序：
+     0 → 1.2s     28 颗粒子从屏幕各处飞向中心汇聚
+     0.8 → 1.2s   中心光核逐渐增强
+     1.2 → 1.35s  白屏扩散覆盖全场（0.15s 快闪）
+     1.35 → 1.9s  白屏渐隐消失（0.55s 平滑过渡）
+
+   层结构：
+     .crystallize-particle ×28  — 飞行粒子（left/top 动画）
+     .crystallize-core           — 中心光核（scale + box-shadow）
+     .crystallize-white-flash    — 白屏遮罩（opacity 入场+退场）
+   ============================================================ */
+
+.crystallize-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: all;
+  background: transparent;
+  overflow: hidden;
+}
+
+/* ---------- 粒子 ---------- */
+.crystallize-particle {
+  position: absolute;
+  width: var(--size, 5px);
+  height: var(--size, 5px);
+  border-radius: 50%;
+  background: hsl(var(--hue, 270), 80%, 65%);
+  box-shadow:
+    0 0 calc(var(--size, 5px) * 1.5) hsl(var(--hue, 270), 80%, 65%),
+    0 0 calc(var(--size, 5px) * 3) hsl(var(--hue, 270), 80%, 55%, 0.6);
+
+  /* 从随机位置飞向中心 */
+  animation: particleConverge 1.2s ease-in forwards;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes particleConverge {
+  0% {
+    left: var(--from-x, 50vw);
+    top: var(--from-y, 50vh);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  8% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    left: 50vw;
+    top: 50vh;
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(0.15);
+  }
+}
+
+/* ---------- 中心光核：0.8s 开始增强 ---------- */
+.crystallize-core {
+  position: absolute;
+  left: 50vw;
+  top: 50vh;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(180, 100, 255, 1) 0%,
+    rgba(140, 60, 240, 0.6) 30%,
+    rgba(100, 40, 220, 0.15) 60%,
+    transparent 100%
+  );
+  opacity: 0;
+  animation: coreGlow 1.2s ease-out forwards;
+  animation-delay: 0.8s;
+}
+
+@keyframes coreGlow {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  40% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(3);
+    box-shadow:
+      0 0 40px rgba(180, 100, 255, 0.9),
+      0 0 80px rgba(140, 60, 240, 0.6),
+      0 0 160px rgba(255, 255, 255, 0.5),
+      0 0 240px rgba(200, 150, 255, 0.4);
+  }
+}
+
+/* ---------- 白屏层：1.2s 出现 → 持续到渐隐结束 ---------- */
+.crystallize-white-flash {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+
+  /* 两段动画串联（各自独立 delay）：
+     flashIn:  1.2s→1.35s  白屏扩散入场
+     flashOut: 1.35s→1.9s  白屏渐隐（0.55s 足够感知到过渡） */
+  animation-name: whiteFlashIn, whiteFlashOut;
+  animation-duration: 0.15s, 0.55s;
+  animation-delay: 1.2s, 1.35s;
+  animation-timing-function: ease-out, ease-in;
+  animation-fill-mode: forwards, forwards;
+}
+
+@keyframes whiteFlashIn {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+}
+
+@keyframes whiteFlashOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
