@@ -1,10 +1,19 @@
-此文件为项目里所有描述文件的索引文件，概括描述了每个描述文件(.md格式)的主要内容。可以通过查看本文件，继而去对应的描述文件再获取详细信息
-# 1.project-concept-describ.md文件
-文件内容：描述了项目的总体概念，用户流(user flow),ai起作用的地方，把用户的记录分为五个分类并且这五个分类是什么，五个分类以及对应的问题集合，用户操作的步骤以及每个步骤的描述
-# 2.project-implement-describ.md文件
-文件内容：描述了项目里的模块划分，总共分为五个模块，对应五个大容器。此文件描述了每个容器的负责范围
-包括以下容器：InitializationPage 初始化页面 （加载容器），RecordEntryPage (记录容器)，QuestionSelectionPage (问题生成与选择容器)，QuestionAnswerePage (问题回答容器),DisplayArchivePage (存储与展示容器)
-# 3.question-selection-page-design.md文件
-文件内容：QuestionSelectionPage 的详细设计方案，包括组件树、数据流、状态机、Zustand Store 扩展、Fallback 默认问题集、以及关键交互规则
-# 4.question-answer-page-design/question-answer-page-design.md文件
-文件内容：QuestionAnswerPage 的详细设计方案，包括组件树、ContextViewer/ResponseEditor 子组件职责、数据流与状态机、Zustand Store 扩展（userAnswer/answeredAt/crystallizing）、结晶动画的 Layout 覆盖层方案（跨路由平滑过渡）、引导文案按框架映射、路由嵌套结构变更、以及边界情况处理
+此文件为项目里所有描述文件的索引文件，概括描述了每个描述文件(.md格式)的主要内容。可以通过查看本文件，继而去对应的描述文件再获取详细信息。
+
+# 1. project-concept-describ.md
+文件内容：描述了项目的总体概念（私人信件博物馆）和业务流转（User Flow）。详细说明了 AI 意图识别的五大积极心理学框架，以及对应的高质量提问模板。此外，还包含了归档期的正念反馈机制和展示期核心信念空间的模块规划。
+
+# 2. project-implement-describ.md
+文件内容：描述了项目里的五大核心模块（容器）划分。明确了每个页面容器内“视觉包装组件”与“核心功能组件”的解耦与嵌套关系。说明了基于 Zustand 的全局状态管理内容、嵌套路由架构（含动画覆盖层）以及数据持久化方案。
+
+# 3. InitializationPage (首页场景容器)-具体实现文档.md
+文件内容：详细说明初始页（首页）的具体前端实现方案。包含三张背景图状态切换与透明交互热区（托盘信件与拱门）的前端像素/百分比标注及代码结构。提供了墙面独立文字层的渲染方案及悬浮（Hover）压暗推进动画的实现约束。
+
+# 4. project-visual-metaphor.md
+文件内容：汇总了全产品各页面的视觉外观、动效思路与叙事隐喻。涵盖首页双空间入口、记录页托盘信纸原地展开、问题选择页扇形堆叠发牌、回答页双面信纸拼接，以及展示页时间线横向滚动、精选展台和随机散落信件的交互手感设定。
+
+# 5. 待改-question-selection-page-design.md
+文件内容：QuestionSelectionPage（问题生成与选择容器）的详细设计方案。包括单选架构决策、组件树职责边界、数据流与状态机。记录了 Zustand Store 扩展细节，以及核心的 AI 失败无感知降级方案（Fallback 默认问题集）。
+
+# 6. 待改-question-answer-page-design.md
+文件内容：QuestionAnswerPage（问题回答容器）的详细设计方案。包含组件树划分、数据流及状态机。重点说明了提升至父 Layout 的结晶粒子动画覆盖层（跨路由平滑过渡）方案，以及按框架映射的引导文案与空数据守卫等边界情况处理。
