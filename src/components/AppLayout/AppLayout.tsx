@@ -1,18 +1,20 @@
+import { useCallback, useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { useRecordStore } from '../../store/useRecordStore';
 import CrystallizeOverlay from '../CrystallizeOverlay/CrystallizeOverlay';
 import './AppLayout.css';
 
+export interface AppLayoutContext {
+  startCrystallizing: () => void;
+}
+
 export default function AppLayout() {
-  const crystallizing = useRecordStore((s) => s.crystallizing);
-  const setCrystallizing = useRecordStore((s) => s.setCrystallizing);
+  // 跨路由动画属于常驻 Layout 的瞬时 UI，不写入持久化业务 Store。
+  const [crystallizing, setCrystallizing] = useState(false);
+  const startCrystallizing = useCallback(() => setCrystallizing(true), []);
 
   return (
     <div className="app-layout">
-      {/* 子路由页面 */}
-      <Outlet />
-
-      {/* 结晶动画覆盖层：应用级，跨路由平滑过渡 */}
+      <Outlet context={{ startCrystallizing } satisfies AppLayoutContext} />
       {crystallizing && (
         <CrystallizeOverlay onDone={() => setCrystallizing(false)} />
       )}

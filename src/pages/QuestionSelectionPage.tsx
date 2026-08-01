@@ -1,108 +1,111 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRecordStore, type QuestionItem } from '../store/useRecordStore';
-import { fetchQuestionFromLLM, getFallbackQuestions } from '../services/llmServices';
+import { useRecordStore } from '../store/useRecordStore';
+import {
+  fetchQuestionFromLLM,
+  FRAMEWORKS,
+  getFallbackQuestions,
+  isFrameworkId,
+} from '../services/llmServices';
 import ThinkingLoader from '../components/ThinkingLoader/ThinkingLoader';
 import './QuestionSelectionPage.css';
 
 export default function QuestionSelectionPage() {
   const navigate = useNavigate();
-  const recordText = useRecordStore((s) => s.recordText);
-  const setFramework = useRecordStore((s) => s.setFramework);
-  const setQuestions = useRecordStore((s) => s.setQuestions);
-  const setSelectedQuestion = useRecordStore((s) => s.setSelectedQuestion);
+  const draft = useRecordStore((state) => state.draft);
+  const updateDraft = useRecordStore((state) => state.updateDraft);
+  const selectQuestion = useRecordStore((state) => state.selectQuestion);
 
-  const [framework, setLocalFramework] = useState<string | null>(null);
-  const [questions, setLocalQuestions] = useState<QuestionItem[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  // 请求期间的展示状态无需跨页面或刷新恢复。
+  const [loading, setLoading] = useState(
+    Boolean(draft && (!draft.frameworkId || draft.candidateQuestions.length === 0)),
+  );
+  // 仅用于提示本次请求是否进入 fallback，不属于用户档案。
   const [isFallback, setIsFallback] = useState(false);
 
-  // ---- 数据加载 ----
   useEffect(() => {
-    let cancelled = false;
+    if (!draft) {
+      navigate('/record', { replace: true });
+      return;
+    }
+    if (draft.frameworkId && draft.candidateQuestions.length > 0) {
+      return;
+    }
 
+    let cancelled = false;
     const load = async () => {
-      let result: { framework: string; questions: QuestionItem[]; isFallback?: boolean };
+      let usedFallback = false;
+      let result;
       try {
-        result = await fetchQuestionFromLLM(recordText);
+        result = await fetchQuestionFromLLM(draft.recordText);
+        if (!isFrameworkId(result.frameworkId)) {
+          result = getFallbackQuestions();
+          usedFallback = true;
+        }
       } catch {
         result = getFallbackQuestions();
+        usedFallback = true;
       }
 
       if (cancelled) return;
-
-      setLocalFramework(result.framework);
-      setLocalQuestions(result.questions);
-      setIsFallback(!!result.isFallback);
+      // fallback 自身只会产生受支持的稳定框架 ID。
+      if (isFrameworkId(result.frameworkId)) {
+        updateDraft({
+          frameworkId: result.frameworkId,
+          candidateQuestions: result.questions,
+          selectedQuestionId: null,
+        });
+      }
+      setIsFallback(usedFallback);
       setLoading(false);
     };
 
-    load();
+    void load();
     return () => { cancelled = true; };
-  }, [recordText]);
+  }, [draft, navigate, updateDraft]);
 
-  // ---- 交互处理 ----
-  const handleSelect = (id: string) => {
-    setSelectedId(id);
-  };
+  if (!draft) return null;
+  if (loading) return <ThinkingLoader />;
 
+  const { frameworkId, candidateQuestions, selectedQuestionId } = draft;
   const handleConfirm = () => {
-    if (!selectedId || !framework) return;
-    const q = questions.find((item) => item.id === selectedId);
-    if (!q) return;
-
-    setFramework(framework);
-    setQuestions(questions);
-    setSelectedQuestion(q);
+    if (!selectedQuestionId) return;
     navigate('/question-answer');
   };
 
-  // ---- 渲染 ----
-  if (loading) {
-    return <ThinkingLoader />;
-  }
-
   return (
     <div className="qs-page">
-      {/* 框架横幅 */}
       <div className="qs-banner">
         <span className="qs-banner-label">AI 识别框架</span>
-        <h2 className="qs-banner-title">{framework}</h2>
+        <h2 className="qs-banner-title">
+          {frameworkId ? FRAMEWORKS[frameworkId].name : '通用反思'}
+        </h2>
       </div>
 
-      {/* 问题卡片列表 */}
       <div className="qs-card-list">
         <p className="qs-card-list-hint">选择最触动你的一个问题</p>
-        {questions.map((q) => (
+        {candidateQuestions.map((question, index) => (
           <button
-            key={q.id}
+            key={question.id}
             type="button"
-            className={`qs-card ${selectedId === q.id ? 'qs-card--selected' : ''}`}
-            onClick={() => handleSelect(q.id)}
+            className={`qs-card ${selectedQuestionId === question.id ? 'qs-card--selected' : ''}`}
+            onClick={() => selectQuestion(question.id)}
           >
-            <span className="qs-card-index">
-              {questions.findIndex((x) => x.id === q.id) + 1}
-            </span>
-            <span className="qs-card-text">{q.text}</span>
+            <span className="qs-card-index">{index + 1}</span>
+            <span className="qs-card-text">{question.text}</span>
             <span className="qs-card-check" aria-hidden="true">
-              {selectedId === q.id ? '✦' : '○'}
+              {selectedQuestionId === question.id ? '✓' : '○'}
             </span>
           </button>
         ))}
       </div>
 
-      {/* 降级提示 */}
-      {isFallback && (
-        <p className="qs-fallback-hint">已为你准备通用反思问题</p>
-      )}
-
-      {/* 确认按钮 */}
+      {isFallback && <p className="qs-fallback-hint">已为你准备通用反思问题</p>}
       <div className="qs-actions">
         <button
           type="button"
           className="qs-btn"
-          disabled={!selectedId}
+          disabled={!selectedQuestionId}
           onClick={handleConfirm}
         >
           确认选择，开始反思

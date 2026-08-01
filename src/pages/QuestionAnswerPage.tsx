@@ -1,122 +1,102 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useRecordStore } from '../store/useRecordStore';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import type { AppLayoutContext } from '../components/AppLayout/AppLayout';
+import { FRAMEWORKS } from '../services/llmServices';
+import { useRecordStore, type FrameworkId } from '../store/useRecordStore';
 import './QuestionAnswerPage.css';
 
-// ============================================================
-// 按框架分类的引导文案
-// ============================================================
-function getPlaceholder(framework: string): string {
-  const map: Record<string, string> = {
-    '逆境重评与复原力': '回顾那个最想放弃的瞬间，写下你想对自己说的话…',
-    '内在力量与优势确立': '用一个画面或一段对话，描述你展现出的那份力量…',
-    '意义建构与价值对齐': '那个瞬间，你内心真正被满足的是什么…',
-    '感恩与联结': '这份温暖从哪里来，带你去到了哪里…',
-    '纯粹品味与心流延展': '闭上眼睛，让那个画面再次浮现，写下你的感受…',
-  };
-
-  // 匹配包含关键字的框架名
-  for (const [key, value] of Object.entries(map)) {
-    if (framework.includes(key)) return value;
-  }
-  return '写下你的想法，让这份感受在文字里停留得更久…';
-}
+const PLACEHOLDERS: Record<FrameworkId, string> = {
+  framework1: '回顾那个最想放弃的瞬间，写下你想对自己说的话…',
+  framework2: '用一个画面或一段对话，描述你展现出的那份力量…',
+  framework3: '那个瞬间，你内心真正被满足的是什么…',
+  framework4: '这份温暖从哪里来，带你去到了哪里…',
+  framework5: '闭上眼睛，让那个画面再次浮现，写下你的感受…',
+};
 
 export default function QuestionAnswerPage() {
   const navigate = useNavigate();
-  const recordText = useRecordStore((s) => s.recordText);
-  const framework = useRecordStore((s) => s.framework);
-  const selectedQuestion = useRecordStore((s) => s.selectedQuestion);
-  const setUserAnswer = useRecordStore((s) => s.setUserAnswer);
-  const setAnsweredAt = useRecordStore((s) => s.setAnsweredAt);
-  const setCrystallizing = useRecordStore((s) => s.setCrystallizing);
+  const { startCrystallizing } = useOutletContext<AppLayoutContext>();
+  const draft = useRecordStore((state) => state.draft);
+  const updateDraft = useRecordStore((state) => state.updateDraft);
+  const commitDraft = useRecordStore((state) => state.commitDraft);
+  // commitDraft 会同步清空草稿；该标记避免空数据守卫覆盖成功提交后的目标路由。
+  const isSubmittingRef = useRef(false);
 
-  const [answer, setAnswer] = useState('');
+  // 仅控制原始记录区域在当前页面是否展开。
   const [recordExpanded, setRecordExpanded] = useState(false);
 
-  // ---- 空数据守卫 ----
+  const selectedQuestion = draft?.candidateQuestions.find(
+    (question) => question.id === draft.selectedQuestionId,
+  );
+
   useEffect(() => {
-    if (!recordText) {
+    if (isSubmittingRef.current) return;
+
+    if (!draft?.recordText.trim()) {
       navigate('/record', { replace: true });
-      return;
-    }
-    if (!selectedQuestion) {
+    } else if (!draft.frameworkId || !selectedQuestion) {
       navigate('/question-selection', { replace: true });
     }
-  }, [recordText, selectedQuestion, navigate]);
+  }, [draft, navigate, selectedQuestion]);
 
-  // 守卫未通过时不渲染
-  if (!recordText || !selectedQuestion) return null;
-
-  // ---- 交互处理 ----
-  const handleBack = () => {
-    navigate('/question-selection');
-  };
+  // 守卫未通过时不渲染，避免重定向生效前短暂显示残缺页面。
+  if (!draft?.recordText.trim() || !draft.frameworkId || !selectedQuestion) return null;
 
   const handleSubmit = () => {
-    if (!answer.trim()) return;
+    // 必须在 commitDraft 之前设置；归档会同步触发当前页面重新渲染。
+    isSubmittingRef.current = true;
+    const entryId = commitDraft();
+    if (!entryId) {
+      isSubmittingRef.current = false;
+      return;
+    }
 
-    setUserAnswer(answer.trim());
-    setAnsweredAt(Date.now());
-    setCrystallizing(true);
-    navigate('/display-archive');
+    startCrystallizing();
+    navigate('/display-archive', { state: { createdEntryId: entryId } });
   };
 
-  const placeholder = getPlaceholder(framework ?? '');
-
-  // ---- 渲染 ----
   return (
     <div className="qa-page">
-      {/* 步骤指示 */}
       <div className="qa-step">
         <span className="qa-step-label">反思书写</span>
       </div>
 
-      {/* ===== ContextViewer ===== */}
       <div className="qa-context">
-        {/* 框架标签 */}
-        {framework && <span className="qa-framework-tag">{framework}</span>}
-
-        {/* 原始记录（在上） */}
+        <span className="qa-framework-tag">{FRAMEWORKS[draft.frameworkId].name}</span>
         <div className="qa-record-section">
           <button
             type="button"
             className="qa-record-toggle"
-            onClick={() => setRecordExpanded((v) => !v)}
+            onClick={() => setRecordExpanded((value) => !value)}
           >
             你的记录 <span className="qa-chevron">{recordExpanded ? '▾' : '▸'}</span>
           </button>
-          {recordExpanded && (
-            <p className="qa-record-text">{recordText}</p>
-          )}
+          {recordExpanded && <p className="qa-record-text">{draft.recordText}</p>}
         </div>
 
-        {/* 选中问题（在下） */}
         <div className="qa-question-card">
           <span className="qa-question-badge">此刻，请回答</span>
           <p className="qa-question-text">{selectedQuestion.text}</p>
         </div>
       </div>
 
-      {/* ===== ResponseEditor ===== */}
       <div className="qa-editor">
-        <p className="qa-editor-hint">{placeholder}</p>
+        <p className="qa-editor-hint">{PLACEHOLDERS[draft.frameworkId]}</p>
         <textarea
           className="qa-textarea"
-          value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          placeholder={placeholder}
+          value={draft.answerText}
+          onChange={(event) => updateDraft({ answerText: event.target.value })}
+          placeholder={PLACEHOLDERS[draft.frameworkId]}
           rows={6}
         />
-        <span className="qa-charcount">{answer.length} 字</span>
+        <span className="qa-charcount">{draft.answerText.length} 字</span>
       </div>
 
-      {/* ===== ActionArea ===== */}
       <div className="qa-actions">
         <button
           type="button"
           className="qa-btn qa-btn--primary"
-          disabled={!answer.trim()}
+          disabled={!draft.answerText.trim()}
           onClick={handleSubmit}
         >
           生成我的反思
@@ -124,7 +104,7 @@ export default function QuestionAnswerPage() {
         <button
           type="button"
           className="qa-btn qa-btn--ghost"
-          onClick={handleBack}
+          onClick={() => navigate('/question-selection')}
         >
           ← 重新选一个问题
         </button>

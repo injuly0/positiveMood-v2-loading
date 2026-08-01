@@ -30,7 +30,7 @@
     - `ContextViewer`（置于信纸左/上半区，展示原始记录与被选中的 AI 提问）。
     - `ResponseEditor`（置于信纸右/下半区，用户最终回答输入区）。
     - `ActionSubmitButton`（提交按钮）。
-  - **核心逻辑**：承载用户的最终深度反思。提交时，触发全局的 `crystallizing` 状态，交由父层级接管动效，并同步底层路由至展示归档页。
+  - **核心逻辑**：回答直接写入当前草稿。提交时通过一次 `commitDraft()` 原子归档，再调用 Outlet Context 中的 `startCrystallizing()` 并跳转至展示归档页。
 
 ## 5. DisplayArchivePage (存储与展示容器)
   - **视图组件（按回味模式划分）**：
@@ -40,16 +40,18 @@
   - **核心功能组件**：`ResultCard`（结构化展示整个梳理流程的最终结果，作为上述三个视图底层通用的数据渲染卡片）。
 
 # 二、全局状态管理 (Zustand)
-使用 Zustand 框架存储与管理应用流转生命周期数据：
-- **原始记录**：`recordText`
-- **AI解析结果**：`framework` (五大框架分类), `questions` (生成的待选问题数组)
-- **用户反思**：`selectedQuestion`, `userAnswer`, `answeredAt`
-- **机制与动画信号**：`crystallizing` (控制跨路由动画), `savorCount` (重温频次权重)
+应用只使用 `useRecordStore`，且仅存储需要刷新后恢复的业务数据：
+- **当前草稿**：`draft`，包含原始记录、稳定框架 ID、候选问题、选中问题和回答。
+- **积极记忆档案**：`archive.entriesById` 按 ID 保存多条记忆，`archive.entryOrder` 保存时间线顺序。
+- **业务 actions**：草稿创建、更新、选题、重置、原子归档，以及记忆的查看、擦亮和收藏。
+
+页面模式、弹窗、加载、展开、偶遇结果和动画阶段等瞬时 UI 不进入 Zustand。时间线、高光顺序和信封等级由 selector 或纯函数动态计算。
 
 # 三、页面跳转与路由架构
 - 使用 `react-router-dom` 框架。
 - 采用**嵌套路由架构**：顶级挂载 `<AppLayout />`。`<AppLayout />` 内部包含用于页面切换的 `<Outlet />` 以及全局常驻的 `<CrystallizeOverlay />` 动画覆盖层，以保证跨页面跳转时动画的独立与连贯。
 
 # 四、数据持久化的方式
-- **V1版本**：利用 Zustand 提供的 `Persist` 中间件，持久化在用户本地硬盘上。
-- **V2版本**：架构已做到关注点分离（UI 容器仅消费 Zustand Store），目前易于替换，因为是解耦的(关注点分离的)。后续可低成本将 Zustand 的存储引擎替换，同步至云端数据库。
+- **开发阶段 V2**：使用 Zustand Persist 与 `zenflow-record-storage-v2`，`partialize` 仅持久化 `draft` 和 `archive`。
+- **旧数据**：旧 key `user-record-storage` 不再读取，本阶段不提供 `version`、`migrate` 或旧数据转换。
+- **动画**：`crystallizing` 改为常驻 `AppLayout` 的本地 state，回答页通过 Outlet Context 启动，既能跨子路由继续播放，又不会被持久化。

@@ -17,3 +17,6 @@
 
 # 6. 待改-question-answer-page-design.md
 文件内容：QuestionAnswerPage（问题回答容器）的详细设计方案。包含组件树划分、数据流及状态机。重点说明了提升至父 Layout 的结晶粒子动画覆盖层（跨路由平滑过渡）方案，以及按框架映射的引导文案与空数据守卫等边界情况处理。
+
+# 7. zustand-store-design.md
+文件内容：定义单 Store 下的持久化草稿、多条积极记忆档案、原子归档 action、展示 selector 和瞬时 UI 状态边界，并记录稳定心理学框架 ID、运行时校验、跨路由结晶动画及 V2 本地持久化方案。

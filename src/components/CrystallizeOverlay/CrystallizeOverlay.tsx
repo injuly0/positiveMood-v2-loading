@@ -51,7 +51,7 @@ export default function CrystallizeOverlay({ onDone }: Props) {
     return () => clearTimeout(timer);
   }, [onDone]);
 
-  const particles = useMemo(generateParticles, []);
+  const particles = useMemo(() => generateParticles(), []);
 
   return (
     <div className="crystallize-overlay">
