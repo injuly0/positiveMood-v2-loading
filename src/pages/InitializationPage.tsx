@@ -4,6 +4,11 @@ import './InitializationPage.css';
 
 type SceneState = 'initial' | 'record' | 'archive';
 
+interface InitializationPageProps {
+  transitionState: 'idle' | 'covering' | 'revealing';
+  onStartRecordTransition: (trigger: HTMLElement) => void;
+}
+
 const sceneAssets: Record<SceneState, string> = {
   initial: '/home/initial-background.png',
   record: '/home/record-focus.png',
@@ -19,7 +24,10 @@ const sceneCopy: Record<SceneState, string> = {
 const isTouchLikeDevice = () =>
   window.matchMedia('(hover: none), (pointer: coarse)').matches;
 
-export default function InitializationPage() {
+export default function InitializationPage({
+  transitionState,
+  onStartRecordTransition,
+}: InitializationPageProps) {
   const navigate = useNavigate();
   const [sceneState, setSceneState] = useState<SceneState>('initial');
 
@@ -35,7 +43,7 @@ export default function InitializationPage() {
   const resetPreview = () => setSceneState('initial');
 
   return (
-    <main className="initialization-page">
+    <main className="initialization-page" data-transition-state={transitionState}>
       <section
         className="home-scene"
         data-scene-state={sceneState}
@@ -77,7 +85,7 @@ export default function InitializationPage() {
           onMouseEnter={() => setSceneState('record')}
           onFocus={() => setSceneState('record')}
           onBlur={resetPreview}
-          onClick={() => activateScene('record', '/record')}
+          onClick={(event) => onStartRecordTransition(event.currentTarget)}
         >
           <span className="home-scene__hotspot-label">开始写信</span>
         </button>

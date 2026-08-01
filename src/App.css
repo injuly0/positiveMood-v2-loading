@@ -161,6 +161,97 @@
   }
 }
 
+.warm-light-transition-layer {
+  --transition-background: #fffaf7;
+  --transition-accent: #d8b7a6;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.warm-light-transition {
+  --light-scale: 1;
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(.2);
+  filter: blur(5px);
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--transition-background) 86%, var(--transition-accent)) 0 34%,
+    color-mix(in srgb, var(--transition-background) 74%, var(--transition-accent)) 58%,
+    color-mix(in srgb, var(--transition-background) 58%, transparent) 78%,
+    transparent 100%
+  );
+  will-change: transform, opacity;
+}
+
+.warm-light-transition-layer[data-transition-state="covering"] .warm-light-transition {
+  animation: warm-light-cover 540ms cubic-bezier(.55, .04, .7, .98) forwards;
+}
+
+.warm-light-transition-layer[data-transition-state="revealing"] .warm-light-transition {
+  animation: warm-light-reveal 430ms ease-out forwards;
+}
+
+@keyframes warm-light-cover {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.2);
+    filter: blur(8px);
+  }
+
+  18% {
+    opacity: .72;
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(var(--light-scale));
+    filter: blur(2px);
+  }
+}
+
+@keyframes warm-light-reveal {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(var(--light-scale));
+  }
+
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(var(--light-scale));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .warm-light-transition-layer[data-transition-state="covering"] .warm-light-transition {
+    animation: warm-light-cover-reduced 120ms ease-out forwards;
+  }
+
+  .warm-light-transition-layer[data-transition-state="revealing"] .warm-light-transition {
+    animation-duration: 120ms;
+  }
+}
+
+@keyframes warm-light-cover-reduced {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(var(--light-scale));
+    filter: blur(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(var(--light-scale));
+    filter: blur(2px);
+  }
+}
+
 .ticks {
   position: relative;
   width: 100%;
