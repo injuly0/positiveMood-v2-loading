@@ -1,73 +1,19 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useRecordStore } from '../store/useRecordStore';
-import {
-  fetchQuestionFromLLM,
-  FRAMEWORKS,
-  getFallbackQuestions,
-  isFrameworkId,
-} from '../services/llmServices';
-import ThinkingLoader from '../components/ThinkingLoader/ThinkingLoader';
+import { FRAMEWORKS } from '../services/llmServices';
 import './QuestionSelectionPage.css';
 
 export default function QuestionSelectionPage() {
   const navigate = useNavigate();
   const draft = useRecordStore((state) => state.draft);
-  const updateDraft = useRecordStore((state) => state.updateDraft);
   const selectQuestion = useRecordStore((state) => state.selectQuestion);
 
-  // 请求期间的展示状态无需跨页面或刷新恢复。
-  const [loading, setLoading] = useState(
-    Boolean(draft && (!draft.frameworkId || draft.candidateQuestions.length === 0)),
-  );
-  // 仅用于提示本次请求是否进入 fallback，不属于用户档案。
-  const [isFallback, setIsFallback] = useState(false);
-
-  useEffect(() => {
-    if (!draft) {
-      navigate('/record', { replace: true });
-      return;
-    }
-    if (draft.frameworkId && draft.candidateQuestions.length > 0) {
-      return;
-    }
-
-    let cancelled = false;
-    const load = async () => {
-      let usedFallback = false;
-      let result;
-      try {
-        result = await fetchQuestionFromLLM(draft.recordText);
-        if (!isFrameworkId(result.frameworkId)) {
-          result = getFallbackQuestions();
-          usedFallback = true;
-        }
-      } catch {
-        result = getFallbackQuestions();
-        usedFallback = true;
-      }
-
-      if (cancelled) return;
-      // fallback 自身只会产生受支持的稳定框架 ID。
-      if (isFrameworkId(result.frameworkId)) {
-        updateDraft({
-          frameworkId: result.frameworkId,
-          candidateQuestions: result.questions,
-          selectedQuestionId: null,
-        });
-      }
-      setIsFallback(usedFallback);
-      setLoading(false);
-    };
-
-    void load();
-    return () => { cancelled = true; };
-  }, [draft, navigate, updateDraft]);
-
-  if (!draft) return null;
-  if (loading) return <ThinkingLoader />;
+  if (!draft || !draft.frameworkId || draft.candidateQuestions.length !== 3) {
+    return <Navigate to="/record" replace />;
+  }
 
   const { frameworkId, candidateQuestions, selectedQuestionId } = draft;
+  const isFallback = draft.questionSource === 'fallback';
   const handleConfirm = () => {
     if (!selectedQuestionId) return;
     navigate('/question-answer');

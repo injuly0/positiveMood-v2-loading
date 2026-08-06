@@ -11,27 +11,36 @@ import QuestionSelectionPage from './pages/QuestionSelectionPage';
 import QuestionAnswerPage from './pages/QuestionAnswerPage';
 import DisplayArchivePage from './pages/DisplayArchivePage';
 import AppLayout from './components/AppLayout/AppLayout';
+import WarmLightTransitionLayer, {
+  type LightGeometry,
+  type SoftFocusTransitionContent,
+  type SoftFocusTransitionState,
+  type StartSoftFocusTransition,
+} from './components/WarmLightTransition/WarmLightTransitionLayer';
 import './App.css';
-
-type TransitionState = 'idle' | 'covering' | 'revealing';
-
-interface LightGeometry {
-  x: number;
-  y: number;
-  scale: number;
-}
 
 const LIGHT_SIZE = 28;
 
+const waitForRoutePaint = (): Promise<void> => new Promise((resolve) => {
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => resolve());
+  });
+});
+
 function AppRoutes() {
   const navigate = useNavigate();
-  const [transitionState, setTransitionState] = useState<TransitionState>('idle');
+  const [transitionState, setTransitionState] = useState<SoftFocusTransitionState>('idle');
   const [lightGeometry, setLightGeometry] = useState<LightGeometry>({
     x: 0,
     y: 0,
     scale: 1,
   });
+  const [transitionContent, setTransitionContent] = useState<SoftFocusTransitionContent | null>(
+    null,
+  );
+  const [showDelayedMessage, setShowDelayedMessage] = useState(false);
   const runningRef = useRef(false);
+  const transitionRunRef = useRef(0);
   const timersRef = useRef<number[]>([]);
 
   const clearTransitionTimers = useCallback(() => {
@@ -39,10 +48,31 @@ function AppRoutes() {
     timersRef.current = [];
   }, []);
 
-  useEffect(() => clearTransitionTimers, [clearTransitionTimers]);
+  useEffect(() => () => {
+    transitionRunRef.current += 1;
+    runningRef.current = false;
+    clearTransitionTimers();
+  }, [clearTransitionTimers]);
 
-  const startRecordTransition = useCallback((trigger: HTMLElement) => {
-    if (runningRef.current) return;
+  const startSoftFocusTransition = useCallback<StartSoftFocusTransition>(({
+    trigger,
+    to,
+    beforeNavigate,
+    waitFor,
+    minimumDurationMs,
+    content,
+    onError,
+  }) => {
+    if (runningRef.current) return false;
+
+    let readiness: Promise<void> | undefined;
+    try {
+      beforeNavigate?.();
+      readiness = waitFor?.();
+    } catch {
+      onError?.();
+      return false;
+    }
 
     const triggerRect = trigger.getBoundingClientRect();
     const viewportWidth = document.documentElement.clientWidth;
@@ -55,23 +85,93 @@ function AppRoutes() {
     const scale = Math.ceil((radius * 2.35) / LIGHT_SIZE);
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const timing = reducedMotion
-      ? { switchPage: 120, reveal: 130, finish: 250 }
-      : { switchPage: 500, reveal: 540, finish: 1000 };
+      ? {
+          cover: 120,
+          switchPage: 120,
+          revealStart: 130,
+          revealDuration: 120,
+          finish: 250,
+        }
+      : {
+          cover: 540,
+          switchPage: 500,
+          revealStart: 540,
+          revealDuration: 430,
+          finish: 1000,
+        };
 
     runningRef.current = true;
+    const runId = transitionRunRef.current + 1;
+    transitionRunRef.current = runId;
     setLightGeometry({ x, y, scale });
+    setTransitionContent(content ?? null);
+    setShowDelayedMessage(false);
     setTransitionState('covering');
 
+    const isCurrentRun = () => transitionRunRef.current === runId;
+    const schedule = (callback: () => void, delay: number) => {
+      const timerId = window.setTimeout(callback, delay);
+      timersRef.current.push(timerId);
+      return timerId;
+    };
+    const wait = (delay: number): Promise<void> => new Promise((resolve) => {
+      schedule(resolve, delay);
+    });
+    const finishTransition = () => {
+      if (!isCurrentRun()) return;
+      clearTransitionTimers();
+      setTransitionState('idle');
+      setTransitionContent(null);
+      setShowDelayedMessage(false);
+      runningRef.current = false;
+    };
+
+    if (readiness) {
+      const minimumDuration = Math.max(timing.cover, minimumDurationMs ?? timing.cover);
+      const coverReady = wait(timing.cover);
+      const minimumReady = wait(minimumDuration);
+
+      schedule(() => {
+        if (isCurrentRun()) setTransitionState('covered');
+      }, timing.cover);
+
+      if (content?.delayedMessage && content.delayedAfterMs !== undefined) {
+        schedule(() => {
+          if (isCurrentRun()) setShowDelayedMessage(true);
+        }, content.delayedAfterMs);
+      }
+
+      void Promise.all([readiness, minimumReady])
+        .then(async () => {
+          if (!isCurrentRun()) return;
+          navigate(to);
+          await waitForRoutePaint();
+          if (!isCurrentRun()) return;
+          setTransitionState('revealing');
+          schedule(finishTransition, timing.revealDuration);
+        })
+        .catch(async () => {
+          await coverReady;
+          if (!isCurrentRun()) return;
+          onError?.();
+          setTransitionState('revealing');
+          schedule(finishTransition, timing.revealDuration);
+        });
+
+      return true;
+    }
+
     timersRef.current.push(
-      window.setTimeout(() => navigate('/record'), timing.switchPage),
-      window.setTimeout(() => setTransitionState('revealing'), timing.reveal),
-      window.setTimeout(() => {
-        setTransitionState('idle');
-        runningRef.current = false;
-        timersRef.current = [];
-      }, timing.finish),
+      window.setTimeout(() => navigate(to), timing.switchPage),
+      window.setTimeout(() => setTransitionState('revealing'), timing.revealStart),
+      window.setTimeout(finishTransition, timing.finish),
     );
-  }, [navigate]);
+    return true;
+  }, [clearTransitionTimers, navigate]);
+
+  const startHomeRecordTransition = useCallback((trigger: HTMLElement) => {
+    startSoftFocusTransition({ trigger, to: '/record' });
+  }, [startSoftFocusTransition]);
 
   return (
     <>
@@ -81,12 +181,12 @@ function AppRoutes() {
           element={(
             <InitializationPage
               transitionState={transitionState}
-              onStartRecordTransition={startRecordTransition}
+              onStartRecordTransition={startHomeRecordTransition}
             />
           )}
         />
 
-        <Route element={<AppLayout />}>
+        <Route element={<AppLayout startSoftFocusTransition={startSoftFocusTransition} />}>
           <Route path="/record" element={<RecordEntryPage />} />
           <Route path="/question-selection" element={<QuestionSelectionPage />} />
           <Route path="/question-answer" element={<QuestionAnswerPage />} />
@@ -94,20 +194,12 @@ function AppRoutes() {
         </Route>
       </Routes>
 
-      <div
-        className="warm-light-transition-layer"
-        data-transition-state={transitionState}
-        aria-hidden="true"
-      >
-        <div
-          className="warm-light-transition"
-          style={{
-            left: `${lightGeometry.x}px`,
-            top: `${lightGeometry.y}px`,
-            '--light-scale': lightGeometry.scale,
-          } as React.CSSProperties}
-        />
-      </div>
+      <WarmLightTransitionLayer
+        state={transitionState}
+        geometry={lightGeometry}
+        content={transitionContent}
+        showDelayedMessage={showDelayedMessage}
+      />
     </>
   );
 }

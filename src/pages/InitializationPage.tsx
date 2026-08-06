@@ -5,7 +5,7 @@ import './InitializationPage.css';
 type SceneState = 'initial' | 'record' | 'archive';
 
 interface InitializationPageProps {
-  transitionState: 'idle' | 'covering' | 'revealing';
+  transitionState: 'idle' | 'covering' | 'covered' | 'revealing';
   onStartRecordTransition: (trigger: HTMLElement) => void;
 }
 

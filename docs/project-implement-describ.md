@@ -19,7 +19,7 @@
 ## 3. QuestionSelectionPage (问题生成与选择容器)
   - **视觉包装组件**：`BackgroundQuote`（原始记录的缩小背板）、`TarotEnvelopeList`（负责控制信封扇形排布与飞入动效的布局容器）。
   - **核心功能组件**：
-    - `ThinkingLoader`（AI 思考时的加载态组件）。
+    - `WarmLightTransitionLayer`（统一处理点击点柔光覆盖、可选异步等待文案与跨路由揭示）。
     - `QuestionCard`（单条问题卡片，置于信封容器内，依然负责选中/未选中状态的切换与单选逻辑）。
     - `ActionSubmitButton`（确认选择按钮）。
   - **核心逻辑**：请求本地大模型服务；支持无感知降级至本地 Fallback 默认问题集；选中后平滑过渡至回答页。

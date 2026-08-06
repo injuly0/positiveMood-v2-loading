@@ -13,11 +13,14 @@ export interface QuestionItem {
   text: string;
 }
 
+export type QuestionSource = 'ai' | 'fallback';
+
 export interface ReflectionDraft {
   id: string;
   recordText: string;
   frameworkId: FrameworkId | null;
   candidateQuestions: QuestionItem[];
+  questionSource?: QuestionSource | null;
   selectedQuestionId: string | null;
   answerText: string;
   startedAt: number;
@@ -46,6 +49,7 @@ export interface RecordState {
   draft: ReflectionDraft | null;
   archive: ArchiveState;
   beginDraft: (recordText: string) => void;
+  saveRecordText: (recordText: string) => void;
   updateDraft: (patch: Partial<ReflectionDraft>) => void;
   selectQuestion: (questionId: string) => void;
   resetDraft: () => void;
@@ -103,10 +107,43 @@ export const useRecordStore = create<RecordState>()(
               recordText: trimmedRecordText,
               frameworkId: null,
               candidateQuestions: [],
+              questionSource: null,
               selectedQuestionId: null,
               answerText: '',
               startedAt: Date.now(),
             },
+          };
+        });
+      },
+
+      saveRecordText: (recordText) => {
+        set((state) => {
+          if (!state.draft) {
+            if (!recordText.trim()) return state;
+            return {
+              draft: {
+                id: crypto.randomUUID(),
+                recordText,
+                frameworkId: null,
+                candidateQuestions: [],
+                questionSource: null,
+                selectedQuestionId: null,
+                answerText: '',
+                startedAt: Date.now(),
+              },
+            };
+          }
+
+          const draftHasEnteredReflection = Boolean(
+            state.draft.frameworkId
+            || state.draft.candidateQuestions.length > 0
+            || state.draft.selectedQuestionId
+            || state.draft.answerText,
+          );
+          if (draftHasEnteredReflection) return state;
+
+          return {
+            draft: { ...state.draft, recordText },
           };
         });
       },

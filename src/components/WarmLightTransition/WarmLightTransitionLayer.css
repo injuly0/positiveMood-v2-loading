@@ -1,0 +1,135 @@
+.warm-light-transition-layer {
+  --transition-background: #fffaf7;
+  --transition-accent: #d8b7a6;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.warm-light-transition-layer:not([data-transition-state="idle"]) {
+  pointer-events: auto;
+}
+
+.warm-light-transition {
+  --light-scale: 1;
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(.2);
+  filter: blur(5px);
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--transition-background) 86%, var(--transition-accent)) 0 34%,
+    color-mix(in srgb, var(--transition-background) 74%, var(--transition-accent)) 58%,
+    color-mix(in srgb, var(--transition-background) 58%, transparent) 78%,
+    transparent 100%
+  );
+  will-change: transform, opacity;
+}
+
+.warm-light-transition-layer[data-transition-state="covering"] .warm-light-transition {
+  animation: warm-light-cover 540ms cubic-bezier(.55, .04, .7, .98) forwards;
+}
+
+.warm-light-transition-layer[data-transition-state="covered"] .warm-light-transition {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(var(--light-scale));
+  filter: blur(2px);
+}
+
+.warm-light-transition-layer[data-transition-state="revealing"] .warm-light-transition {
+  animation: warm-light-reveal 430ms ease-out forwards;
+}
+
+.warm-light-transition-content {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  box-sizing: border-box;
+  opacity: 0;
+  color: #765f4c;
+  text-align: center;
+  transition: opacity 160ms ease;
+}
+
+.warm-light-transition-content p {
+  margin: 0;
+  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-size: 18px;
+  line-height: 1.8;
+  letter-spacing: .04em;
+}
+
+.warm-light-transition-layer[data-transition-state="covered"]
+  .warm-light-transition-content {
+  opacity: 1;
+}
+
+.warm-light-transition-layer[data-transition-state="revealing"]
+  .warm-light-transition-content {
+  opacity: 0;
+}
+
+@keyframes warm-light-cover {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.2);
+    filter: blur(8px);
+  }
+
+  18% {
+    opacity: .72;
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(var(--light-scale));
+    filter: blur(2px);
+  }
+}
+
+@keyframes warm-light-reveal {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(var(--light-scale));
+  }
+
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(var(--light-scale));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .warm-light-transition-layer[data-transition-state="covering"] .warm-light-transition {
+    animation: warm-light-cover-reduced 120ms ease-out forwards;
+  }
+
+  .warm-light-transition-layer[data-transition-state="revealing"] .warm-light-transition {
+    animation-duration: 120ms;
+  }
+
+  .warm-light-transition-content {
+    transition-duration: 80ms;
+  }
+}
+
+@keyframes warm-light-cover-reduced {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(var(--light-scale));
+    filter: blur(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(var(--light-scale));
+    filter: blur(2px);
+  }
+}

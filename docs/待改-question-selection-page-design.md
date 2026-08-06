@@ -8,7 +8,7 @@
 | 数据存放 | **Zustand store** 扩展，下游页面可复用 |
 | 后续路由 | 选完后跳转到 `/question-answer` |
 | 回退 | 暂不允许回退，路径单向 |
-| 加载态 | "思考中"动画（呼应禅意/呼吸感 UI 理念） |
+| 加载态 | 由跨路由 `WarmLightTransitionLayer` 承担，本页不再渲染独立加载页 |
 | AI 失败降级 | 展示**随机框架的默认问题集**，用户无感知降级 |
 
 ---
@@ -17,7 +17,6 @@
 
 ```
 QuestionSelectionPage
-├── ThinkingLoader                ← AI 调用期间展示，加载完成后卸载
 ├── FrameworkBanner               ← 展示 AI 识别出的分类框架
 ├── QuestionCardList
 │   └── QuestionCard × N          ← 每个卡片：问题文本 + 选中/未选中状态切换
@@ -29,7 +28,6 @@ QuestionSelectionPage
 
 | 组件 | 职责 | 边界 |
 |---|---|---|
-| `ThinkingLoader` | 纯展示组件，优雅的加载动画 | 无业务逻辑，通过 `visible` prop 控制显隐 |
 | `FrameworkBanner` | 展示框架名称 + 简短心理学说明 | 接收 `framework` 字符串 |
 | `QuestionCard` | 单条问题卡片 + 选中态切换 | 接收 `question: { id, text }` + `selected: boolean` + `onSelect` |
 | `ActionArea` | 确认按钮 | 接收 `disabled` + `onConfirm` |
@@ -39,13 +37,18 @@ QuestionSelectionPage
 ## 三、数据流
 
 ```
-页面挂载
-  ├─ 从 store 读取 recordText
-  ├─ 调用 fetchQuestionFromLLM(text)
-  │    ├─ 成功 → 获取 { framework, questions[] }
+记录页点击“收藏这份记忆”
+  ├─ 保存 recordText
+  ├─ 立即调用 fetchQuestionFromLLM(text)
+  │    ├─ 成功 → 校验并写入 { framework, questions[] }
   │    └─ 失败 → 降级：随机返回一个框架的默认问题集
-  ├─ loading 态展示 ThinkingLoader 动画
-  └─ 数据就绪 → 展示 FrameworkBanner + QuestionCard 列表
+  ├─ 柔光转场等待问题生成 Promise
+  └─ 数据就绪 → 切换路由并揭示 QuestionSelectionPage
+
+问题选择页挂载
+  ├─ 从 store 读取已经准备好的 framework + questions
+  ├─ 数据不完整 → 守卫返回 /record
+  └─ 数据完整 → 直接展示 FrameworkBanner + QuestionCard 列表
 
 用户交互
   ├─ 点击 QuestionCard → 单选高亮（取消上一个、选中当前）
@@ -59,12 +62,12 @@ QuestionSelectionPage
 ## 四、状态机
 
 ```
-[loading] ──(AI 返回)──▶ [loaded: 展示框架 + 问题卡片]
-                      └──(AI 失败)──▶ [loaded + 降级: 展示默认问题]
-                                         │
-                                    [选中问题] ──▶ button enabled
-                                         │
-                                    [点击确认] ──▶ 存入 store → 跳转
+[路由守卫] ──(数据完整)──▶ [loaded: 展示框架 + 问题卡片]
+          └──(数据缺失)──▶ [/record]
+
+[loaded] ──▶ [选中问题] ──▶ button enabled
+                                  │
+                             [点击确认] ──▶ 存入 store → 跳转
 ```
 
 ---
@@ -129,12 +132,13 @@ AI 调用失败时，从五个框架中随机抽取一个框架的完整问题�
 改动：
   src/store/useRecordStore.ts          ← 扩展：framework、questions、selectedQuestion
   src/services/llmServices.ts          ← 扩展：失败降级 + 每个框架的默认问题集
-  src/pages/QuestionSelectionPage.tsx  ← 核心实现
+  src/pages/RecordEntryPage.tsx        ← 保存正文并发起问题生成 Promise
+  src/pages/QuestionSelectionPage.tsx  ← 只展示已准备的问题并执行路由守卫
+  src/components/WarmLightTransition/  ← 覆盖、等待、文案和揭示
   src/App.tsx                          ← 追加 /question-answer 路由占位
 
 新建：
   src/pages/QuestionSelectionPage.css  ← 页面样式
-  src/components/ThinkingLoader/       ← 加载动画组件 + 样式
 ```
 
 ---
@@ -144,4 +148,6 @@ AI 调用失败时，从五个框架中随机抽取一个框架的完整问题�
 1. **单选**：同一时间仅高亮一个问题卡片，点击另一个时自动取消上一个
 2. **确认按钮**：未选中任何问题时置灰禁用，选中后启用
 3. **降级无感知**：AI 失败时用户看到的是正常的框架+问题列表，仅在最低处有一行小字提示"已为你准备通用反思问题"
-4. **loading 动效**：不低于 1.5s（即使 API 秒回也要展示完整动画，保证"思考中"的仪式感）
+4. **等待动效**：统一柔光最早在点击后 `1200ms` 开始揭示；AI Promise 未完成时继续保持覆盖
+5. **延迟提示**：前 `3000ms` 显示“正在读这封信，并为你寻找三个问题”，超过 `3000ms` 显示“还在整理，可能需要一点时间”
+6. **无重复加载**：问题选择页不得再挂载 `ThinkingLoader` 或播放第二次入场加载动画

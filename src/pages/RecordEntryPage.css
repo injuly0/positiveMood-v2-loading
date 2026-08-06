@@ -1,0 +1,346 @@
+.record-page {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #251911;
+}
+
+.record-page-stage {
+  position: relative;
+  width: min(100vw, calc(100vh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  container-type: inline-size;
+  isolation: isolate;
+  color: #4b4038;
+  text-align: left;
+}
+
+.record-page-background,
+.letter-artwork-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  user-select: none;
+}
+
+.record-page-background {
+  z-index: 0;
+}
+
+.letter-artwork-image {
+  z-index: 1;
+}
+
+.letter-content-overlay {
+  position: absolute;
+  z-index: 2;
+  top: 16.3194cqw;
+  left: 30.5556cqw;
+  display: flex;
+  flex-direction: column;
+  width: 40.5556cqw;
+  height: 25.625cqw;
+  font-synthesis: none;
+}
+
+.letter-top-area {
+  position: relative;
+  width: 100%;
+  min-height: 5.2778cqw;
+}
+
+.letter-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: calc(100% - 1.1806cqw);
+  height: 1.9444cqw;
+  margin-left: 1.0417cqw;
+  color: #765f4c;
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-size: 0.8333cqw;
+  line-height: 1.3889cqw;
+  letter-spacing: 0.0139cqw;
+  white-space: nowrap;
+}
+
+.letter-meta-info {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  gap: 0.5556cqw;
+  overflow: hidden;
+}
+
+.letter-date {
+  flex: none;
+  font-weight: 400;
+}
+
+.letter-theme {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+}
+
+.letter-prompt {
+  display: -webkit-box;
+  width: calc(100% - 1.1806cqw);
+  margin: 0.6944cqw 0 0 1.0417cqw;
+  overflow: hidden;
+  color: #352a23;
+  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+  font-size: 1.8056cqw;
+  font-weight: 500;
+  line-height: 2.6389cqw;
+  letter-spacing: 0;
+  text-wrap: pretty;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.shuffle-prompt-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4167cqw;
+  width: 6.6667cqw;
+  height: 1.9444cqw;
+  padding: 0.3472cqw 0.8333cqw;
+  box-sizing: border-box;
+  border: 0.0694cqw solid rgb(107 85 68 / 46%);
+  border-radius: 999px;
+  color: #6b5544;
+  background: rgb(255 250 243 / 38%);
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-size: 0.7639cqw;
+  font-weight: 500;
+  line-height: 1.25cqw;
+  letter-spacing: 0.0069cqw;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 120ms ease;
+}
+
+.shuffle-prompt-button svg {
+  flex: none;
+  width: 0.8333cqw;
+  height: 0.8333cqw;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.35;
+}
+
+.shuffle-prompt-button:hover {
+  border-color: rgb(107 85 68 / 72%);
+  background: rgb(255 250 243 / 60%);
+}
+
+.shuffle-prompt-button:active {
+  transform: translateY(0.0694cqw);
+}
+
+.shuffle-prompt-button:focus-visible,
+.collect-memory-button:focus-visible {
+  outline: 0.1042cqw solid rgb(118 95 76 / 72%);
+  outline-offset: 0.1389cqw;
+}
+
+.letter-editor-shell {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  margin-top: 2.2222cqw;
+  border-radius: 0.8333cqw;
+  background:
+    linear-gradient(rgb(255 250 243 / 22%), rgb(247 236 224 / 16%));
+}
+
+.letter-editor {
+  position: absolute;
+  top: 1.25cqw;
+  left: 1.5278cqw;
+  width: 37.5cqw;
+  height: calc(100% - 2.5cqw);
+  padding: 0;
+  resize: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 0;
+  outline: 0;
+  color: #4b4038;
+  background: transparent;
+  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+  font-size: 0.7986cqw;
+  font-weight: 400;
+  line-height: 1.2847cqw;
+  letter-spacing: 0;
+  scrollbar-color: rgb(118 95 76 / 28%) transparent;
+  scrollbar-width: thin;
+  box-sizing: border-box;
+}
+
+.letter-editor::placeholder {
+  color: rgb(75 64 56 / 42%);
+  opacity: 1;
+}
+
+.letter-footer {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 1.6667cqw;
+  margin-top: 3.6806cqw;
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+.record-status-group {
+  display: flex;
+  align-items: center;
+  gap: 0.2778cqw;
+  height: 1.25cqw;
+  color: rgb(128 108 91 / 82%);
+  font-size: 0.7639cqw;
+  font-weight: 400;
+  line-height: 1.25cqw;
+  letter-spacing: 0.0069cqw;
+  white-space: nowrap;
+}
+
+.save-status {
+  display: inline-block;
+}
+
+.save-status--error {
+  color: #945d4f;
+}
+
+.record-status-separator,
+.word-count {
+  display: inline-block;
+}
+
+.collect-memory-button {
+  flex: none;
+  width: auto;
+  height: 1.3889cqw;
+  padding: 0;
+  border: 0;
+  color: #765f4c;
+  background: transparent;
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-size: 0.9028cqw;
+  font-weight: 500;
+  line-height: 1.3889cqw;
+  letter-spacing: 0.0069cqw;
+  text-align: right;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    transform 160ms ease,
+    opacity 160ms ease;
+}
+
+.collect-memory-button:hover:not(:disabled) {
+  color: #4e3b2e;
+  transform: translateX(0.1389cqw);
+}
+
+.collect-memory-button:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.draft-conflict-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(31 20 14 / 54%);
+  backdrop-filter: blur(8px);
+}
+
+.draft-conflict-dialog {
+  width: min(420px, 100%);
+  padding: 34px;
+  border: 1px solid rgb(133 101 78 / 26%);
+  border-radius: 18px;
+  color: #4b4038;
+  background: #f5eadc;
+  box-shadow: 0 24px 70px rgb(29 17 10 / 32%);
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.draft-conflict-kicker {
+  margin: 0 0 8px;
+  color: #8b705c;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+}
+
+.draft-conflict-dialog h2 {
+  margin: 0 0 10px;
+  color: #352a23;
+  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+  font-size: 24px;
+}
+
+.draft-conflict-dialog > p:not(.draft-conflict-kicker) {
+  color: #806c5b;
+  font-size: 14px;
+}
+
+.draft-conflict-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.draft-conflict-actions button {
+  min-height: 42px;
+  border-radius: 999px;
+  font: 500 14px/1 "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  cursor: pointer;
+}
+
+.draft-conflict-continue {
+  border: 1px solid #765f4c;
+  color: #fffaf4;
+  background: #765f4c;
+}
+
+.draft-conflict-discard {
+  border: 1px solid rgb(118 95 76 / 36%);
+  color: #765f4c;
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shuffle-prompt-button,
+  .collect-memory-button {
+    transition: none;
+  }
+}
