@@ -31,6 +31,15 @@
   will-change: transform, opacity;
 }
 
+.warm-light-transition-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #fff;
+  opacity: 0;
+  will-change: opacity;
+}
+
 .warm-light-transition-layer[data-transition-state="covering"] .warm-light-transition {
   animation: warm-light-cover 540ms cubic-bezier(.55, .04, .7, .98) forwards;
 }
@@ -45,9 +54,25 @@
   animation: warm-light-reveal 430ms ease-out forwards;
 }
 
+.warm-light-transition-layer[data-transition-state="covering"]
+  .warm-light-transition-veil {
+  animation: warm-light-veil-cover 540ms cubic-bezier(.55, .04, .7, .98) forwards;
+}
+
+.warm-light-transition-layer[data-transition-state="covered"]
+  .warm-light-transition-veil {
+  opacity: 1;
+}
+
+.warm-light-transition-layer[data-transition-state="revealing"]
+  .warm-light-transition-veil {
+  animation: warm-light-veil-reveal 430ms ease-out forwards;
+}
+
 .warm-light-transition-content {
   position: absolute;
   inset: 0;
+  z-index: 2;
   display: grid;
   place-items: center;
   padding: 32px;
@@ -106,12 +131,43 @@
   }
 }
 
+@keyframes warm-light-veil-cover {
+  0%,
+  72% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes warm-light-veil-reveal {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .warm-light-transition-layer[data-transition-state="covering"] .warm-light-transition {
     animation: warm-light-cover-reduced 120ms ease-out forwards;
   }
 
   .warm-light-transition-layer[data-transition-state="revealing"] .warm-light-transition {
+    animation-duration: 120ms;
+  }
+
+  .warm-light-transition-layer[data-transition-state="covering"]
+    .warm-light-transition-veil {
+    animation: warm-light-veil-cover-reduced 120ms ease-out forwards;
+  }
+
+  .warm-light-transition-layer[data-transition-state="revealing"]
+    .warm-light-transition-veil {
     animation-duration: 120ms;
   }
 
@@ -131,5 +187,15 @@
     opacity: 1;
     transform: translate(-50%, -50%) scale(var(--light-scale));
     filter: blur(2px);
+  }
+}
+
+@keyframes warm-light-veil-cover-reduced {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }

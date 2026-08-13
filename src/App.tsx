@@ -87,17 +87,11 @@ function AppRoutes() {
     const timing = reducedMotion
       ? {
           cover: 120,
-          switchPage: 120,
-          revealStart: 130,
           revealDuration: 120,
-          finish: 250,
         }
       : {
           cover: 540,
-          switchPage: 500,
-          revealStart: 540,
           revealDuration: 430,
-          finish: 1000,
         };
 
     runningRef.current = true;
@@ -161,11 +155,15 @@ function AppRoutes() {
       return true;
     }
 
-    timersRef.current.push(
-      window.setTimeout(() => navigate(to), timing.switchPage),
-      window.setTimeout(() => setTransitionState('revealing'), timing.revealStart),
-      window.setTimeout(finishTransition, timing.finish),
-    );
+    void wait(timing.cover).then(async () => {
+      if (!isCurrentRun()) return;
+      setTransitionState('covered');
+      navigate(to);
+      await waitForRoutePaint();
+      if (!isCurrentRun()) return;
+      setTransitionState('revealing');
+      schedule(finishTransition, timing.revealDuration);
+    });
     return true;
   }, [clearTransitionTimers, navigate]);
 

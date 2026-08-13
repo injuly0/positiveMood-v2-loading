@@ -60,6 +60,10 @@ export default function WarmLightTransitionLayer({
           '--light-scale': geometry.scale,
         } as CSSProperties}
       />
+      <div
+        className="warm-light-transition-veil"
+        aria-hidden="true"
+      />
       {message && (
         <div
           className="warm-light-transition-content"

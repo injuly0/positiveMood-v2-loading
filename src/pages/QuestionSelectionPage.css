@@ -254,6 +254,7 @@
 
 .qs-card-motion {
   position: absolute;
+  z-index: 1;
   inset: 0;
   transform: translateY(0) rotate(0) scale(1);
   transform-origin: 50% 86%;
@@ -367,9 +368,15 @@
 .qs-card-question {
   position: absolute;
   z-index: 5;
+  display: block;
+  padding: 0 0.4167cqw 0 0;
+  border: 0;
   margin: 0;
-  overflow: hidden;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
   color: #4b4038;
+  background: transparent;
   font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
   font-size: 1.5278cqw;
   font-weight: 300;
@@ -377,6 +384,30 @@
   letter-spacing: 0;
   text-align: left;
   text-wrap: pretty;
+  cursor: pointer;
+  pointer-events: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: rgb(107 85 68 / 42%) transparent;
+  scrollbar-width: thin;
+  outline: none;
+}
+
+.qs-card-question::-webkit-scrollbar {
+  width: 0.2778cqw;
+}
+
+.qs-card-question::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.qs-card-question::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgb(107 85 68 / 42%);
+}
+
+.qs-card-question:focus-visible {
+  outline: 0.1042cqw solid rgb(118 95 76 / 68%);
+  outline-offset: 0.1389cqw;
 }
 
 .qs-rack-card--one .qs-card-question {
@@ -406,17 +437,9 @@
   transform-origin: top left;
 }
 
-.qs-interaction-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 110;
-  pointer-events: none;
-}
-
 .qs-card-hotspot {
-  --hotspot-z: 10;
   position: absolute;
-  z-index: var(--hotspot-z);
+  z-index: 0;
   display: block;
   padding: 0;
   border: 0;
@@ -428,16 +451,16 @@
 }
 
 .qs-card-hotspot--1 {
-  top: 12.8472cqw;
-  left: 10.1542cqw;
+  top: -1.0417cqw;
+  left: -0.6097cqw;
   width: 33.8632cqw;
   height: 16.5563cqw;
   transform: rotate(-5deg);
 }
 
 .qs-card-hotspot--2 {
-  top: 3.5007cqw;
-  left: 4.2361cqw;
+  top: -0.5965cqw;
+  left: -0.7639cqw;
   width: 25.9917cqw;
   height: 17.5646cqw;
   transform: rotate(3deg);
@@ -445,7 +468,7 @@
 
 .qs-card-hotspot--3 {
   top: -1.25cqw;
-  left: 27.0833cqw;
+  left: -0.9723cqw;
   width: 21.2278cqw;
   height: 23.2556cqw;
   transform: rotate(-6deg);

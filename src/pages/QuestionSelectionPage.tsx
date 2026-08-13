@@ -13,7 +13,6 @@ interface QuestionCardConfig {
   textureSrc: string;
   numberSrc: string;
   defaultZIndex: number;
-  hotspotZIndex: number;
   uprightRotation: string;
 }
 
@@ -27,7 +26,6 @@ const CARD_CONFIGS: QuestionCardConfig[] = [
     textureSrc: `${ASSET_ROOT}/card-1-texture.png`,
     numberSrc: `${ASSET_ROOT}/number-1.png`,
     defaultZIndex: 50,
-    hotspotZIndex: 30,
     uprightRotation: '-5deg',
   },
   {
@@ -37,7 +35,6 @@ const CARD_CONFIGS: QuestionCardConfig[] = [
     textureSrc: `${ASSET_ROOT}/card-2-texture.png`,
     numberSrc: `${ASSET_ROOT}/number-2.png`,
     defaultZIndex: 30,
-    hotspotZIndex: 20,
     uprightRotation: '3deg',
   },
   {
@@ -47,7 +44,6 @@ const CARD_CONFIGS: QuestionCardConfig[] = [
     textureSrc: `${ASSET_ROOT}/card-3-texture.png`,
     numberSrc: `${ASSET_ROOT}/number-3.png`,
     defaultZIndex: 20,
-    hotspotZIndex: 10,
     uprightRotation: '-6deg',
   },
 ];
@@ -57,6 +53,8 @@ interface QuestionCardVisualProps {
   question: QuestionItem;
   active: boolean;
   selected: boolean;
+  onActivate: (card: CardNumber | null) => void;
+  onOpen: (questionId: string, trigger: HTMLElement) => void;
 }
 
 function QuestionCardVisual({
@@ -64,6 +62,8 @@ function QuestionCardVisual({
   question,
   active,
   selected,
+  onActivate,
+  onOpen,
 }: QuestionCardVisualProps) {
   const style = {
     '--card-default-z': config.defaultZIndex,
@@ -75,7 +75,6 @@ function QuestionCardVisual({
       className={`qs-rack-card ${config.frameClassName}`}
       data-active={active || selected}
       style={style}
-      aria-hidden="true"
     >
       <div className="qs-card-motion">
         <img className="qs-card-paper" src={config.paperSrc} alt="" draggable="false" />
@@ -117,8 +116,26 @@ function QuestionCardVisual({
           />
         ) : null}
         <img className="qs-card-texture" src={config.textureSrc} alt="" draggable="false" />
-        <p className="qs-card-question">{question.text}</p>
+        <button
+          type="button"
+          className="qs-card-question"
+          aria-label={`选择问题 ${config.number}：${question.text}`}
+          aria-pressed={selected}
+          onPointerEnter={() => onActivate(config.number)}
+          onPointerLeave={() => onActivate(null)}
+          onFocus={() => onActivate(config.number)}
+          onBlur={() => onActivate(null)}
+          onClick={(event) => onOpen(question.id, event.currentTarget)}
+        >
+          {question.text}
+        </button>
       </div>
+      <CardHotspot
+        config={config}
+        question={question}
+        onActivate={onActivate}
+        onOpen={onOpen}
+      />
     </div>
   );
 }
@@ -126,15 +143,13 @@ function QuestionCardVisual({
 interface CardHotspotProps {
   config: QuestionCardConfig;
   question: QuestionItem;
-  selected: boolean;
   onActivate: (card: CardNumber | null) => void;
-  onOpen: (questionId: string, trigger: HTMLButtonElement) => void;
+  onOpen: (questionId: string, trigger: HTMLElement) => void;
 }
 
 function CardHotspot({
   config,
   question,
-  selected,
   onActivate,
   onOpen,
 }: CardHotspotProps) {
@@ -142,9 +157,8 @@ function CardHotspot({
     <button
       type="button"
       className={`qs-card-hotspot qs-card-hotspot--${config.number}`}
-      style={{ '--hotspot-z': config.hotspotZIndex } as CSSProperties}
-      aria-label={`选择问题 ${config.number}：${question.text}`}
-      aria-pressed={selected}
+      tabIndex={-1}
+      aria-hidden="true"
       onPointerEnter={() => onActivate(config.number)}
       onPointerLeave={() => onActivate(null)}
       onFocus={() => onActivate(config.number)}
@@ -193,7 +207,7 @@ export default function QuestionSelectionPage() {
     return <Navigate to="/record" replace />;
   }
 
-  const openQuestion = (questionId: string, trigger: HTMLButtonElement) => {
+  const openQuestion = (questionId: string, trigger: HTMLElement) => {
     selectQuestion(questionId);
     startSoftFocusTransition({
       trigger,
@@ -231,6 +245,8 @@ export default function QuestionSelectionPage() {
                 question={question}
                 active={activeCard === config.number}
                 selected={draft.selectedQuestionId === question.id}
+                onActivate={setActiveCard}
+                onOpen={openQuestion}
               />
             );
           })}
@@ -248,21 +264,6 @@ export default function QuestionSelectionPage() {
             draggable="false"
           />
 
-          <div className="qs-interaction-layer">
-            {CARD_CONFIGS.map((config, index) => {
-              const question = draft.candidateQuestions[index];
-              return (
-                <CardHotspot
-                  key={question.id}
-                  config={config}
-                  question={question}
-                  selected={draft.selectedQuestionId === question.id}
-                  onActivate={setActiveCard}
-                  onOpen={openQuestion}
-                />
-              );
-            })}
-          </div>
         </section>
 
         <nav className="qs-shuffle-actions" aria-label="更换问题">
