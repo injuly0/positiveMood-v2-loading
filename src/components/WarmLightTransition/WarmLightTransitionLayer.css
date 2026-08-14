@@ -85,7 +85,7 @@
 
 .warm-light-transition-content p {
   margin: 0;
-  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-family: var(--font-serif-sc);
   font-size: 18px;
   line-height: 1.8;
   letter-spacing: .04em;
