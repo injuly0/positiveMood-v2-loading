@@ -1,7 +1,7 @@
 .initialization-page {
-  --scene-heading-font: "Karla", "Noto Sans SC", "Microsoft YaHei", sans-serif;
-  --scene-heading-weight: 800;
-  --scene-heading-style: italic;
+  --scene-heading-font: var(--font-serif-sc);
+  --scene-heading-weight: 700;
+  --scene-heading-style: normal;
   position: fixed;
   inset: 0;
   z-index: 100;
@@ -164,7 +164,7 @@
   color: #fffaf4;
   background: rgb(49 29 21 / 42%);
   box-shadow: 0 5px 22px rgb(45 25 16 / 18%);
-  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-sans-sc);
   font-size: clamp(10px, 0.9cqw, 13px);
   font-weight: 500;
   letter-spacing: 0.08em;
@@ -193,8 +193,9 @@
   z-index: 3;
   margin: 0;
   color: rgb(80 57 45 / 60%);
-  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-sans-sc);
   font-size: clamp(10px, 0.83cqw, 12px);
+  font-weight: 400;
   letter-spacing: 0.12em;
   text-shadow: 0 1px 8px rgb(255 255 255 / 50%);
 }

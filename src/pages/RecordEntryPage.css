@@ -65,7 +65,7 @@
   height: 1.9444cqw;
   margin-left: 1.0417cqw;
   color: #765f4c;
-  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-sans-sc);
   font-size: 0.8333cqw;
   line-height: 1.3889cqw;
   letter-spacing: 0.0139cqw;
@@ -98,9 +98,9 @@
   margin: 0.6944cqw 0 0 1.0417cqw;
   overflow: hidden;
   color: #352a23;
-  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+  font-family: var(--font-serif-sc);
   font-size: 1.8056cqw;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 2.6389cqw;
   letter-spacing: 0;
   text-wrap: pretty;
@@ -121,7 +121,7 @@
   border-radius: 999px;
   color: #6b5544;
   background: rgb(255 250 243 / 38%);
-  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-sans-sc);
   font-size: 0.7639cqw;
   font-weight: 500;
   line-height: 1.25cqw;
@@ -186,10 +186,10 @@
   outline: 0;
   color: #4b4038;
   background: transparent;
-  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
-  font-size: 0.7986cqw;
+  font-family: var(--font-serif-sc);
+  font-size: 1.25cqw;
   font-weight: 400;
-  line-height: 1.2847cqw;
+  line-height: 2.0139cqw;
   letter-spacing: 0;
   scrollbar-color: rgb(118 95 76 / 28%) transparent;
   scrollbar-width: thin;
@@ -209,7 +209,7 @@
   width: 100%;
   height: 1.6667cqw;
   margin-top: 3.6806cqw;
-  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-sans-sc);
 }
 
 .record-status-group {
@@ -246,7 +246,7 @@
   border: 0;
   color: #765f4c;
   background: transparent;
-  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-sans-sc);
   font-size: 0.9028cqw;
   font-weight: 500;
   line-height: 1.3889cqw;
@@ -289,7 +289,7 @@
   color: #4b4038;
   background: #f5eadc;
   box-shadow: 0 24px 70px rgb(29 17 10 / 32%);
-  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-sans-sc);
   text-align: center;
   box-sizing: border-box;
 }
@@ -304,7 +304,7 @@
 .draft-conflict-dialog h2 {
   margin: 0 0 10px;
   color: #352a23;
-  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+  font-family: var(--font-serif-sc);
   font-size: 24px;
 }
 
@@ -322,7 +322,7 @@
 .draft-conflict-actions button {
   min-height: 42px;
   border-radius: 999px;
-  font: 500 14px/1 "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font: 500 14px/1 var(--font-sans-sc);
   cursor: pointer;
 }
 

@@ -41,7 +41,7 @@
   height: 5.3472cqw;
   margin: 0;
   color: #f2e4e4;
-  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+  font-family: var(--font-serif-sc);
   font-size: 2.5cqw;
   font-weight: 700;
   line-height: 2.6389cqw;
@@ -72,7 +72,7 @@
   height: 2.9861cqw;
   margin: 0 0 9.2361cqw 1.875cqw;
   color: rgb(242 228 228 / 70%);
-  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+  font-family: var(--font-serif-sc);
   font-size: 2.5cqw;
   font-weight: 700;
   line-height: 2.6389cqw;
@@ -141,10 +141,10 @@
   overflow-x: hidden;
   overflow-y: auto;
   color: #4b4038;
-  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
-  font-size: 1.1111cqw;
+  font-family: var(--font-serif-sc);
+  font-size: 1.25cqw;
   font-weight: 400;
-  line-height: 1.5972cqw;
+  line-height: 2.0139cqw;
   letter-spacing: 0;
   scrollbar-color: rgb(107 85 68 / 35%) transparent;
   scrollbar-width: thin;
@@ -377,9 +377,9 @@
   overflow-y: auto;
   color: #4b4038;
   background: transparent;
-  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+  font-family: var(--font-serif-sc);
   font-size: 1.5278cqw;
-  font-weight: 300;
+  font-weight: 400;
   line-height: 2.3611cqw;
   letter-spacing: 0;
   text-align: left;
@@ -500,7 +500,7 @@
   border: 0;
   color: #fff;
   background: transparent;
-  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+  font-family: var(--font-sans-sc);
   font-size: 1.3889cqw;
   font-weight: 500;
   line-height: 1.3889cqw;
