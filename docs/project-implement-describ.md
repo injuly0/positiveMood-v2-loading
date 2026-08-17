@@ -17,12 +17,12 @@
   - **核心逻辑**：拦截热区点击后执行展开动效，底层依然稳定捕获表单数据并全局存储。
 
 ## 3. QuestionSelectionPage (问题生成与选择容器)
-  - **视觉包装组件**：`BackgroundQuote`（原始记录的缩小背板）、`TarotEnvelopeList`（负责控制信封扇形排布与飞入动效的布局容器）。
+  - **视觉包装组件**：`OriginalRecord`（原始记录信纸）、`QuestionCardVisual`（黄铜托架中的粉、绿、蓝三张问题卡）和 `CardHotspot`（与卡片视觉分离的交互热区）。
   - **核心功能组件**：
     - `WarmLightTransitionLayer`（统一处理点击点柔光覆盖、可选异步等待文案与跨路由揭示）。
-    - `QuestionCard`（单条问题卡片，置于信封容器内，依然负责选中/未选中状态的切换与单选逻辑）。
-    - `ActionSubmitButton`（确认选择按钮）。
-  - **核心逻辑**：请求本地大模型服务；支持无感知降级至本地 Fallback 默认问题集；选中后平滑过渡至回答页。
+    - `QuestionCardVisual`（渲染固定视觉槽位及其当前候选题）。
+    - `ShuffleActions`（“换一个深思的角度”和“换一组问题”）。
+  - **核心逻辑**：记录页离场前只请求一次 Qwen，以获得框架 ID；问题选择页从本地题库抽题，两个换题按钮均不再次请求 Qwen。点击任一卡片时，`selectedQuestionId` 与 `selectedCardVariant` 在同一次 Zustand 写入中保存，随后立即柔光转场至回答页，不存在额外确认按钮。
 
 ## 4. QuestionAnswerPage (问题回答容器)
   - **视觉包装组件**：`UnifiedLetterSheet`（提供“左右双面翻开”形态的统一信纸布局容器）。
@@ -41,9 +41,9 @@
 
 # 二、全局状态管理 (Zustand)
 应用只使用 `useRecordStore`，且仅存储需要刷新后恢复的业务数据：
-- **当前草稿**：`draft`，包含原始记录、稳定框架 ID、候选问题、选中问题和回答。
+- **当前草稿**：`draft`，包含原始记录、稳定框架 ID、当前三道候选题、浏览历史、选中问题、所选卡片视觉变体和回答。
 - **积极记忆档案**：`archive.entriesById` 按 ID 保存多条记忆，`archive.entryOrder` 保存时间线顺序。
-- **业务 actions**：草稿创建、更新、选题、重置、原子归档，以及记忆的查看、擦亮和收藏。
+- **业务 actions**：草稿创建与更新、初始化题组、同框架换题、切换框架、问题与卡片变体的原子选择、重置、原子归档，以及记忆的查看、擦亮和收藏。
 
 页面模式、弹窗、加载、展开、偶遇结果和动画阶段等瞬时 UI 不进入 Zustand。时间线、高光顺序和信封等级由 selector 或纯函数动态计算。
 

@@ -174,7 +174,7 @@ export default function RecordEntryPage() {
         setInitialQuestionSet(
           frameworkId,
           questionSet.questions,
-          usedFallback ? 'fallback' : 'ai',
+          usedFallback ? 'fallback' : 'qwen',
           questionSet.seenQuestionIds,
         );
       },

@@ -131,8 +131,10 @@ framework5
 ```python
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -146,7 +148,7 @@ ALLOWED_FRAMEWORKS = {
 
 
 class FrameworkRequest(BaseModel):
-    recordText: str = Field(min_length=1, max_length=5000)
+    recordText: str
 
 
 class FrameworkResponse(BaseModel):
@@ -159,37 +161,76 @@ def qwen_generate(record_text: str) -> str:
     raise NotImplementedError
 
 
-@app.post(
-    "/api/v1/reflection/framework",
-    response_model=FrameworkResponse,
-)
-def classify_framework(payload: FrameworkRequest) -> FrameworkResponse:
+def error_response(
+    status_code: int,
+    code: str,
+    message: str,
+    request_id: str,
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "error": {
+                "code": code,
+                "message": message,
+                "requestId": request_id,
+            }
+        },
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(
+    request: Request,
+    exc: RequestValidationError,
+) -> JSONResponse:
+    return error_response(
+        400,
+        "INVALID_REQUEST",
+        "Request body is invalid.",
+        str(uuid4()),
+    )
+
+
+@app.post("/api/v1/reflection/framework")
+def classify_framework(payload: FrameworkRequest):
     request_id = str(uuid4())
     record_text = payload.recordText.strip()
-    if not record_text:
-        raise HTTPException(status_code=400, detail="recordText is empty")
+    if not 1 <= len(record_text) <= 5000:
+        return error_response(
+            400,
+            "INVALID_REQUEST",
+            "recordText must contain 1 to 5000 Unicode characters.",
+            request_id,
+        )
 
     try:
         raw_output = qwen_generate(record_text)
     except Exception as exc:
         # 生产日志记录 request_id 和异常类型，不记录完整用户正文。
-        raise HTTPException(status_code=502, detail={
-            "code": "MODEL_UNAVAILABLE",
-            "requestId": request_id,
-        }) from exc
+        return error_response(
+            502,
+            "MODEL_UNAVAILABLE",
+            "The model is unavailable.",
+            request_id,
+        )
 
     framework_id = raw_output.strip()
     if framework_id not in ALLOWED_FRAMEWORKS:
-        raise HTTPException(status_code=502, detail={
-            "code": "MODEL_OUTPUT_INVALID",
-            "requestId": request_id,
-        })
+        return error_response(
+            502,
+            "MODEL_OUTPUT_INVALID",
+            "The model did not return a supported framework id.",
+            request_id,
+        )
 
     return FrameworkResponse(
         frameworkId=framework_id,
         requestId=request_id,
     )
 ```
+
+示例通过自定义 `RequestValidationError` handler 将请求体缺失、类型错误等校验失败统一为 `400 + error` 包装，避免 FastAPI 默认的 `422 + detail` 与本文 API 契约冲突。生产实现可记录异常类型，但不得把完整用户正文写入错误响应或普通日志。
 
 ## 6. 推理参数建议
 

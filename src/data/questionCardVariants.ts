@@ -1,3 +1,5 @@
+import { assetUrl } from '../utils/assetUrl';
+
 export type QuestionCardVariant = 'pink' | 'green' | 'blue';
 
 export type QuestionCardNumber = 1 | 2 | 3;
@@ -14,7 +16,7 @@ export interface QuestionCardConfig {
   uprightRotation: string;
 }
 
-const ASSET_ROOT = '/question-selection';
+const ASSET_ROOT = assetUrl('question-selection');
 
 export const QUESTION_CARD_CONFIGS: readonly QuestionCardConfig[] = [
   {

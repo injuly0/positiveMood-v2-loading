@@ -62,15 +62,15 @@
 
 ### [`待改-question-selection-page-design.md`](待改-question-selection-page-design.md)
 
-状态：待改的早期设计方案。
+状态：历史稿，已停止作为实现依据。
 
-记录问题选择页早期的单选架构、组件树、数据流、状态机和 AI fallback 思路。当前功能以 `question-selection-frontend-spec.md` 和实际代码为准；使用本文前必须检查是否仍然适用。
+记录问题选择页早期的确认按钮、组件树、数据流、状态机和 AI fallback 思路。当前功能以 `question-selection-frontend-spec.md`、`reflection-question-bank.md`、`qwen-framework-backend-implementation.md` 和实际代码为准。
 
 ### [`待改-question-answer-page-design.md`](待改-question-answer-page-design.md)
 
-状态：待改的设计方案。
+状态：待讨论稿，本轮不修改，也不作为当前实现依据。
 
-描述问题回答页的组件树、数据流、返回路径、空数据守卫，以及由父级 Layout 承担的结晶动画。实现前需要结合当前代码核对。
+暂存问题回答页的早期组件树、数据流、返回路径、空数据守卫和结晶动画设想。回答页视觉与所选卡片颜色的使用方式尚未讨论清楚，后续应先形成新 Spec，再实施页面改造。
 
 ## 4. 跨页面动效
 
@@ -100,7 +100,7 @@ Qwen 框架识别后端实现规范。定义后端职责、允许返回的框架
 | 修改首页 | `InitializationPage (首页场景容器)-具体实现文档.md`、`project-visual-metaphor.md` |
 | 修改记录页 | `record-page-spec-v6.md`；涉及提交转场时再读 v5 转场补充与统一转场规范 |
 | 修改问题选择页 | `question-selection-frontend-spec.md`、`reflection-question-bank.md`、`zustand-store-design.md` |
-| 修改问题回答页 | `待改-question-answer-page-design.md`、`zustand-store-design.md`，并核对当前代码 |
+| 修改问题回答页 | 先与用户确认并形成新 Spec；`待改-question-answer-page-design.md` 仅供历史参考，状态数据边界参照 `zustand-store-design.md` |
 | 修改页面转场 | `柔光聚焦页面转场规范.md`；异步提交场景再读 v5 转场补充 |
 | 接入或修改 Qwen 后端 | `qwen-framework-backend-implementation.md`、`reflection-question-bank.md` |
 | 修改路由、资源、构建或部署 | `deployment-path-convention.md` |

@@ -32,8 +32,9 @@ interface ReflectionDraft {
   recordText: string
   frameworkId: FrameworkId | null
   candidateQuestions: QuestionItem[]
-  questionSource?: 'ai' | 'fallback' | null
+  initialFrameworkSource?: 'qwen' | 'fallback' | null
   selectedQuestionId: string | null
+  selectedCardVariant: 'pink' | 'green' | 'blue' | null
   answerText: string
   seenFrameworkIds: FrameworkId[]
   seenQuestionIdsByFramework: Partial<Record<FrameworkId, string[]>>
@@ -44,17 +45,33 @@ interface ReflectionDraft {
 其中：
 
 - `frameworkId` 和 `candidateQuestions` 表示当前页面正在展示的内容，而不是用户最终选中后才保存的内容。
+- `initialFrameworkSource` 只记录首次框架来自 Qwen 还是前端 fallback；两个换题按钮不会修改它。
+- `selectedQuestionId` 与 `selectedCardVariant` 共同描述用户当前选择，并作为跨页面上下文持久化。
 - `seenFrameworkIds` 记录当前框架轮次已经看过的框架。
 - `seenQuestionIdsByFramework` 分框架记录当前问题轮次已经展示过的问题。
 - `answerText` 在选择不同问题、换一组问题或换框架时均保留。
 
-Store 继续通过 `zenflow-record-storage-v2` 持久化 `draft` 和 `archive`。自定义 `merge` 会为旧缓存补齐浏览历史字段：
+Store 继续通过 `zenflow-record-storage-v2` 持久化 `draft` 和 `archive`。自定义 `merge` 会为旧缓存规范化来源并补齐浏览历史与卡片变体：
 
 - 旧草稿已有框架时，将该框架加入 `seenFrameworkIds`；
 - 旧草稿已有候选题时，将候选题 ID 写入对应框架历史；
+- 旧 `questionSource: 'ai'` 转换为 `initialFrameworkSource: 'qwen'`；
+- 旧草稿已有选中问题但没有颜色时，按该问题在当前候选数组中的槽位推导卡片变体；
 - 没有旧草稿时维持 `draft: null`。
 
-### 3.2 React 页面瞬时状态
+### 3.2 视觉槽位映射
+
+`candidateQuestions` 的数组下标表示本次渲染的卡片槽位，而不是固定问题编号：
+
+| 当前候选题下标 | 页面卡片序号 | 卡片变体 |
+|---|---:|---|
+| `0` | 1 | `pink`（粉色） |
+| `1` | 2 | `green`（绿色） |
+| `2` | 3 | `blue`（蓝色） |
+
+稳定问题 ID（例如 `framework2-q03`）每次抽题后都可能出现在任一槽位，因此问题 ID 与颜色不存在永久绑定。粉、绿、蓝的素材、纹理透明度、层级和旋转信息统一由 `src/data/questionCardVariants.ts` 的 `QUESTION_CARD_CONFIGS` 提供，问题选择页与后续页面复用同一配置。
+
+### 3.3 React 页面瞬时状态
 
 问题选择页本地保存：
 
@@ -85,7 +102,8 @@ swapPhase: 'idle' | 'leaving' | 'entering'
 - 框架来源；
 - 初始框架历史；
 - 初始问题历史；
-- `selectedQuestionId: null`。
+- `selectedQuestionId: null`；
+- `selectedCardVariant: null`。
 
 ## 5. 换一组问题
 
@@ -95,7 +113,7 @@ swapPhase: 'idle' | 'leaving' | 'entering'
 2. 从 `seenQuestionIdsByFramework[currentFrameworkId]` 读取本轮历史。
 3. 优先从当前框架未看过的问题中随机抽取三道。
 4. 通过 `refreshQuestionsInCurrentFramework` 原子写入新题组。
-5. 清空 `selectedQuestionId`，保留 `answerText`。
+5. 同时清空 `selectedQuestionId` 与 `selectedCardVariant`，保留 `answerText`。
 6. 新卡片执行入场动画。
 
 ### 5.2 问题轮次耗尽
@@ -118,7 +136,7 @@ swapPhase: 'idle' | 'leaving' | 'entering'
 3. 从剩余框架中随机选择一个。
 4. 从新框架题库中抽取三道题。
 5. 通过 `switchQuestionFramework` 同时写入新框架、新题组和浏览历史。
-6. 清空 `selectedQuestionId`，保留 `answerText`。
+6. 同时清空 `selectedQuestionId` 与 `selectedCardVariant`，保留 `answerText`。
 7. 新卡片执行入场动画。
 
 ### 6.2 框架轮次耗尽
@@ -133,9 +151,19 @@ swapPhase: 'idle' | 'leaving' | 'entering'
 
 用户点击问题卡片时：
 
-- 只更新 `selectedQuestionId`；
+- 根据当前候选题槽位取得卡片变体；
+- 在同一次 `selectQuestion(questionId, cardVariant)` 写入中更新 `selectedQuestionId` 与 `selectedCardVariant`；
 - 不改变 `answerText`；
 - 通过现有柔光转场进入回答页。
+
+例如，`framework2-q03` 当前位于下标 `0` 的粉色槽位时：
+
+```text
+点击粉色卡片
+  → selectedQuestionId = framework2-q03
+  → selectedCardVariant = pink
+  → 进入回答页
+```
 
 用户从回答页返回后，无论选择另一道当前问题、换题组还是换框架，已经填写的回答都保留。归档时，最终保存的是“最后选中的问题 + 当前回答”。
 
@@ -154,12 +182,13 @@ idle → leaving（180ms）→ 写入 Zustand → entering（360ms）→ idle
 
 ## 9. 原子 Store action
 
-本功能使用三个语义 action：
+本功能使用四个语义 action：
 
 ```ts
 setInitialQuestionSet(...)
 refreshQuestionsInCurrentFramework(...)
 switchQuestionFramework(...)
+selectQuestion(questionId, cardVariant)
 ```
 
 页面不得通过多次通用 `updateDraft()` 分步修改框架和问题，避免出现“新框架 + 旧问题”的中间状态。
@@ -172,8 +201,9 @@ switchQuestionFramework(...)
 - 同一问题轮次内不重复问题；耗尽后不立即重复当前三题。
 - 连续点击“换一个深思的角度”，一轮内不重复框架。
 - 五个框架耗尽后开启新一轮，且不会立即返回当前框架。
-- 换题和换框架后 `selectedQuestionId` 为空。
+- 每个候选槽位始终映射到正确的粉、绿、蓝卡片，但稳定问题 ID 不与颜色固定绑定。
+- 点击卡片后，问题 ID 与该槽位对应的卡片变体在一次 store 写入中同时保存，刷新后可恢复。
+- 换题和换框架后 `selectedQuestionId`、`selectedCardVariant` 均为空。
 - 换题、换框架、重新选择问题均不清空 `answerText`。
 - 换卡动画期间按钮不可重复触发。
 - Qwen 请求次数不因两个换题按钮增加。
-

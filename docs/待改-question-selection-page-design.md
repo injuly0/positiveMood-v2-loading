@@ -1,4 +1,8 @@
-# QuestionSelectionPage 设计方案
+# QuestionSelectionPage 设计方案（历史稿，停止作为实现依据）
+
+> [!WARNING]
+> 本文保留的是早期“选中后再点击确认”“AI 返回具体问题”等方案，仅供追溯，不再作为开发与验收依据。
+> 当前实现以 `question-selection-frontend-spec.md`、`reflection-question-bank.md` 和 `qwen-framework-backend-implementation.md` 为准。
 
 ## 一、架构决策
 

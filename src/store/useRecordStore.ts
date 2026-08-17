@@ -1,5 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import {
+  getQuestionCardVariantByIndex,
+  isQuestionCardVariant,
+  type QuestionCardVariant,
+} from '../data/questionCardVariants';
 
 export type FrameworkId =
   | 'framework1'
@@ -13,7 +18,7 @@ export interface QuestionItem {
   text: string;
 }
 
-export type QuestionSource = 'ai' | 'fallback';
+export type FrameworkSource = 'qwen' | 'fallback';
 
 export type SeenQuestionIdsByFramework = Partial<Record<FrameworkId, string[]>>;
 
@@ -22,8 +27,9 @@ export interface ReflectionDraft {
   recordText: string;
   frameworkId: FrameworkId | null;
   candidateQuestions: QuestionItem[];
-  questionSource?: QuestionSource | null;
+  initialFrameworkSource?: FrameworkSource | null;
   selectedQuestionId: string | null;
+  selectedCardVariant: QuestionCardVariant | null;
   answerText: string;
   seenFrameworkIds: FrameworkId[];
   seenQuestionIdsByFramework: SeenQuestionIdsByFramework;
@@ -58,7 +64,7 @@ export interface RecordState {
   setInitialQuestionSet: (
     frameworkId: FrameworkId,
     questions: QuestionItem[],
-    source: QuestionSource,
+    source: FrameworkSource,
     seenQuestionIds: string[],
   ) => void;
   refreshQuestionsInCurrentFramework: (
@@ -71,7 +77,7 @@ export interface RecordState {
     seenFrameworkIds: FrameworkId[],
     seenQuestionIds: string[],
   ) => void;
-  selectQuestion: (questionId: string) => void;
+  selectQuestion: (questionId: string, cardVariant: QuestionCardVariant) => void;
   resetDraft: () => void;
   commitDraft: () => string | null;
   viewEntry: (id: string) => void;
@@ -95,7 +101,10 @@ const hasThreeValidQuestions = (questions: readonly QuestionItem[]): boolean => 
 const normalizeDraft = (draft: ReflectionDraft | null | undefined): ReflectionDraft | null => {
   if (!draft) return null;
 
-  const legacyDraft = draft as Partial<ReflectionDraft>;
+  const legacyDraft = draft as Partial<ReflectionDraft> & {
+    questionSource?: 'ai' | 'fallback' | null;
+  };
+  const { questionSource: legacyQuestionSource, ...draftWithoutLegacySource } = legacyDraft;
   const frameworkId = legacyDraft.frameworkId ?? null;
   const candidateQuestions = legacyDraft.candidateQuestions ?? [];
   const existingFrameworkIds = legacyDraft.seenFrameworkIds ?? [];
@@ -110,12 +119,35 @@ const normalizeDraft = (draft: ReflectionDraft | null | undefined): ReflectionDr
     seenQuestionIdsByFramework[frameworkId] = candidateQuestions.map((question) => question.id);
   }
 
+  const initialFrameworkSource = legacyDraft.initialFrameworkSource === 'qwen'
+    || legacyDraft.initialFrameworkSource === 'fallback'
+    ? legacyDraft.initialFrameworkSource
+    : legacyQuestionSource === 'ai'
+      ? 'qwen'
+      : legacyQuestionSource === 'fallback'
+        ? 'fallback'
+        : null;
+  const selectedQuestionIndex = candidateQuestions.findIndex(
+    (question) => question.id === legacyDraft.selectedQuestionId,
+  );
+  const selectedQuestionId = selectedQuestionIndex >= 0
+    ? legacyDraft.selectedQuestionId ?? null
+    : null;
+  const expectedCardVariant = getQuestionCardVariantByIndex(selectedQuestionIndex);
+  const selectedCardVariant = isQuestionCardVariant(legacyDraft.selectedCardVariant)
+    && legacyDraft.selectedCardVariant === expectedCardVariant
+    ? legacyDraft.selectedCardVariant
+    : expectedCardVariant;
+
   return {
-    ...draft,
+    ...draftWithoutLegacySource,
     candidateQuestions,
+    initialFrameworkSource,
+    selectedQuestionId,
+    selectedCardVariant,
     seenFrameworkIds,
     seenQuestionIdsByFramework,
-  };
+  } as ReflectionDraft;
 };
 
 export const getEnvelopeLevel = (polishCount: number): number => {
@@ -161,8 +193,9 @@ export const useRecordStore = create<RecordState>()(
               recordText: trimmedRecordText,
               frameworkId: null,
               candidateQuestions: [],
-              questionSource: null,
+              initialFrameworkSource: null,
               selectedQuestionId: null,
+              selectedCardVariant: null,
               answerText: '',
               seenFrameworkIds: [],
               seenQuestionIdsByFramework: {},
@@ -182,8 +215,9 @@ export const useRecordStore = create<RecordState>()(
                 recordText,
                 frameworkId: null,
                 candidateQuestions: [],
-                questionSource: null,
+                initialFrameworkSource: null,
                 selectedQuestionId: null,
+                selectedCardVariant: null,
                 answerText: '',
                 seenFrameworkIds: [],
                 seenQuestionIdsByFramework: {},
@@ -223,8 +257,9 @@ export const useRecordStore = create<RecordState>()(
               ...state.draft,
               frameworkId,
               candidateQuestions: questions.map((question) => ({ ...question })),
-              questionSource: source,
+              initialFrameworkSource: source,
               selectedQuestionId: null,
+              selectedCardVariant: null,
               seenFrameworkIds: [frameworkId],
               seenQuestionIdsByFramework: {
                 ...state.draft.seenQuestionIdsByFramework,
@@ -245,6 +280,7 @@ export const useRecordStore = create<RecordState>()(
               ...state.draft,
               candidateQuestions: questions.map((question) => ({ ...question })),
               selectedQuestionId: null,
+              selectedCardVariant: null,
               seenQuestionIdsByFramework: {
                 ...state.draft.seenQuestionIdsByFramework,
                 [frameworkId]: unique(seenQuestionIds),
@@ -269,6 +305,7 @@ export const useRecordStore = create<RecordState>()(
               frameworkId,
               candidateQuestions: questions.map((question) => ({ ...question })),
               selectedQuestionId: null,
+              selectedCardVariant: null,
               seenFrameworkIds: unique(seenFrameworkIds),
               seenQuestionIdsByFramework: {
                 ...state.draft.seenQuestionIdsByFramework,
@@ -279,13 +316,21 @@ export const useRecordStore = create<RecordState>()(
         });
       },
 
-      selectQuestion: (questionId) => {
+      selectQuestion: (questionId, cardVariant) => {
         set((state) => {
-          if (!state.draft?.candidateQuestions.some((question) => question.id === questionId)) {
+          const questionIndex = state.draft?.candidateQuestions.findIndex(
+            (question) => question.id === questionId,
+          ) ?? -1;
+          const expectedVariant = getQuestionCardVariantByIndex(questionIndex);
+          if (!state.draft || expectedVariant !== cardVariant) {
             return state;
           }
           return {
-            draft: { ...state.draft, selectedQuestionId: questionId },
+            draft: {
+              ...state.draft,
+              selectedQuestionId: questionId,
+              selectedCardVariant: cardVariant,
+            },
           };
         });
       },

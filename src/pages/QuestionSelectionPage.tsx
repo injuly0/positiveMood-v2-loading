@@ -5,63 +5,32 @@ import {
   drawQuestionSet,
   pickNextFrameworkId,
 } from '../data/reflectionQuestions';
+import {
+  QUESTION_CARD_CONFIGS,
+  type QuestionCardConfig,
+  type QuestionCardNumber,
+  type QuestionCardVariant,
+} from '../data/questionCardVariants';
 import { useRecordStore, type QuestionItem } from '../store/useRecordStore';
 import { assetUrl } from '../utils/assetUrl';
 import './QuestionSelectionPage.css';
 
-type CardNumber = 1 | 2 | 3;
 type ShuffleMode = 'questions' | 'framework';
 type SwapPhase = 'idle' | 'leaving' | 'entering';
 
-interface QuestionCardConfig {
-  number: CardNumber;
-  frameClassName: string;
-  paperSrc: string;
-  textureSrc: string;
-  numberSrc: string;
-  defaultZIndex: number;
-  uprightRotation: string;
-}
-
 const ASSET_ROOT = assetUrl('question-selection');
-
-const CARD_CONFIGS: QuestionCardConfig[] = [
-  {
-    number: 1,
-    frameClassName: 'qs-rack-card--one',
-    paperSrc: `${ASSET_ROOT}/card-1-pink.png`,
-    textureSrc: `${ASSET_ROOT}/card-1-texture.png`,
-    numberSrc: `${ASSET_ROOT}/number-1.png`,
-    defaultZIndex: 50,
-    uprightRotation: '-5deg',
-  },
-  {
-    number: 2,
-    frameClassName: 'qs-rack-card--two',
-    paperSrc: `${ASSET_ROOT}/card-2-green.png`,
-    textureSrc: `${ASSET_ROOT}/card-2-texture.png`,
-    numberSrc: `${ASSET_ROOT}/number-2.png`,
-    defaultZIndex: 30,
-    uprightRotation: '3deg',
-  },
-  {
-    number: 3,
-    frameClassName: 'qs-rack-card--three',
-    paperSrc: `${ASSET_ROOT}/card-3-blue.png`,
-    textureSrc: `${ASSET_ROOT}/card-3-texture.png`,
-    numberSrc: `${ASSET_ROOT}/number-3.png`,
-    defaultZIndex: 20,
-    uprightRotation: '-6deg',
-  },
-];
 
 interface QuestionCardVisualProps {
   config: QuestionCardConfig;
   question: QuestionItem;
   active: boolean;
   selected: boolean;
-  onActivate: (card: CardNumber | null) => void;
-  onOpen: (questionId: string, trigger: HTMLElement) => void;
+  onActivate: (card: QuestionCardNumber | null) => void;
+  onOpen: (
+    questionId: string,
+    cardVariant: QuestionCardVariant,
+    trigger: HTMLElement,
+  ) => void;
 }
 
 function QuestionCardVisual({
@@ -132,7 +101,7 @@ function QuestionCardVisual({
           onPointerLeave={() => onActivate(null)}
           onFocus={() => onActivate(config.number)}
           onBlur={() => onActivate(null)}
-          onClick={(event) => onOpen(question.id, event.currentTarget)}
+          onClick={(event) => onOpen(question.id, config.variant, event.currentTarget)}
         >
           {question.text}
         </button>
@@ -150,8 +119,12 @@ function QuestionCardVisual({
 interface CardHotspotProps {
   config: QuestionCardConfig;
   question: QuestionItem;
-  onActivate: (card: CardNumber | null) => void;
-  onOpen: (questionId: string, trigger: HTMLElement) => void;
+  onActivate: (card: QuestionCardNumber | null) => void;
+  onOpen: (
+    questionId: string,
+    cardVariant: QuestionCardVariant,
+    trigger: HTMLElement,
+  ) => void;
 }
 
 function CardHotspot({
@@ -170,7 +143,7 @@ function CardHotspot({
       onPointerLeave={() => onActivate(null)}
       onFocus={() => onActivate(config.number)}
       onBlur={() => onActivate(null)}
-      onClick={(event) => onOpen(question.id, event.currentTarget)}
+      onClick={(event) => onOpen(question.id, config.variant, event.currentTarget)}
     />
   );
 }
@@ -212,7 +185,7 @@ export default function QuestionSelectionPage() {
     (state) => state.refreshQuestionsInCurrentFramework,
   );
   const switchFramework = useRecordStore((state) => state.switchQuestionFramework);
-  const [activeCard, setActiveCard] = useState<CardNumber | null>(null);
+  const [activeCard, setActiveCard] = useState<QuestionCardNumber | null>(null);
   const [shuffleMode, setShuffleMode] = useState<ShuffleMode | null>(null);
   const [swapPhase, setSwapPhase] = useState<SwapPhase>('idle');
   const swapTimersRef = useRef<number[]>([]);
@@ -225,9 +198,13 @@ export default function QuestionSelectionPage() {
     return <Navigate to="/record" replace />;
   }
 
-  const openQuestion = (questionId: string, trigger: HTMLElement) => {
+  const openQuestion = (
+    questionId: string,
+    cardVariant: QuestionCardVariant,
+    trigger: HTMLElement,
+  ) => {
     if (swapPhase !== 'idle') return;
-    selectQuestion(questionId);
+    selectQuestion(questionId, cardVariant);
     startSoftFocusTransition({
       trigger,
       to: '/question-answer',
@@ -313,7 +290,7 @@ export default function QuestionSelectionPage() {
         >
           <img className="qs-rack-back" src={`${ASSET_ROOT}/rack-back.png`} alt="" draggable="false" />
 
-          {CARD_CONFIGS.map((config, index) => {
+          {QUESTION_CARD_CONFIGS.map((config, index) => {
             const question = draft.candidateQuestions[index];
             return (
               <QuestionCardVisual
