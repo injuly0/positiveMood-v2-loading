@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
+import { assetUrl } from '../../utils/assetUrl';
 import './VlogLoader.css';
 
 const UI_FRAMES = [
-  '/loading-ui/google-search_untitled.png',
-  '/loading-ui/imessage-blue_untitled.png',
-  '/loading-ui/imessage-gray_untitled.png',
-  '/loading-ui/instagram-comment_untitled.png',
-  '/loading-ui/instagram-dm_untitled.png',
-  '/loading-ui/instagram-dm-received_untitled.png'
+  assetUrl('loading-ui/google-search_untitled.png'),
+  assetUrl('loading-ui/imessage-blue_untitled.png'),
+  assetUrl('loading-ui/imessage-gray_untitled.png'),
+  assetUrl('loading-ui/instagram-comment_untitled.png'),
+  assetUrl('loading-ui/instagram-dm_untitled.png'),
+  assetUrl('loading-ui/instagram-dm-received_untitled.png'),
 ];
 
 // 定义组件接收的属性接口，明确向父组件索要一个回调函数

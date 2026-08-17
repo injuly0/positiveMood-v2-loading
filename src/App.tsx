@@ -17,6 +17,7 @@ import WarmLightTransitionLayer, {
   type SoftFocusTransitionState,
   type StartSoftFocusTransition,
 } from './components/WarmLightTransition/WarmLightTransitionLayer';
+import { APP_BASE_PATH } from './utils/assetUrl';
 import './App.css';
 
 const LIGHT_SIZE = 28;
@@ -204,7 +205,7 @@ function AppRoutes() {
 
 function App() {
   return (
-    <Router>
+    <Router basename={APP_BASE_PATH}>
       <AppRoutes />
     </Router>
   );

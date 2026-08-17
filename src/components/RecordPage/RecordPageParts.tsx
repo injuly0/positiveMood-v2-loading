@@ -1,4 +1,5 @@
 import type { ChangeEventHandler, ReactNode } from 'react';
+import { assetUrl } from '../../utils/assetUrl';
 
 export type SaveState = 'default' | 'saving' | 'saved' | 'error';
 
@@ -13,7 +14,7 @@ export function RecordPageBackground() {
   return (
     <img
       className="record-page-background"
-      src="/record/record-background.png"
+      src={assetUrl('record/record-background.png')}
       alt=""
       aria-hidden="true"
     />
@@ -24,7 +25,7 @@ export function LetterArtworkImage() {
   return (
     <img
       className="letter-artwork-image"
-      src="/record/letter-artwork.png"
+      src={assetUrl('record/letter-artwork.png')}
       alt=""
       aria-hidden="true"
     />

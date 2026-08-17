@@ -1,5 +1,9 @@
 # React + TypeScript + Vite
 
+## 项目规范
+
+- [`/letter/` 部署路径与 URL 规范](docs/deployment-path-convention.md)：后续涉及路由、静态资源、Vite 构建或 Nginx 部署的代码生成必须遵守。
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

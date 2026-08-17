@@ -6,6 +6,7 @@ import {
   pickNextFrameworkId,
 } from '../data/reflectionQuestions';
 import { useRecordStore, type QuestionItem } from '../store/useRecordStore';
+import { assetUrl } from '../utils/assetUrl';
 import './QuestionSelectionPage.css';
 
 type CardNumber = 1 | 2 | 3;
@@ -22,7 +23,7 @@ interface QuestionCardConfig {
   uprightRotation: string;
 }
 
-const ASSET_ROOT = '/question-selection';
+const ASSET_ROOT = assetUrl('question-selection');
 
 const CARD_CONFIGS: QuestionCardConfig[] = [
   {

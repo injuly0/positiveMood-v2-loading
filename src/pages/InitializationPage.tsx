@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { assetUrl } from '../utils/assetUrl';
 import './InitializationPage.css';
 
 type SceneState = 'initial' | 'record' | 'archive';
@@ -10,9 +11,9 @@ interface InitializationPageProps {
 }
 
 const sceneAssets: Record<SceneState, string> = {
-  initial: '/home/initial-background.png',
-  record: '/home/record-focus.png',
-  archive: '/home/archive-focus.png',
+  initial: assetUrl('home/initial-background.png'),
+  record: assetUrl('home/record-focus.png'),
+  archive: assetUrl('home/archive-focus.png'),
 };
 
 const sceneCopy: Record<SceneState, string> = {
