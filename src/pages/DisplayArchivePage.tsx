@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FRAMEWORKS } from '../services/llmServices';
+import { FRAMEWORKS } from '../data/reflectionQuestions';
 import {
   getEnvelopeLevel,
   selectHighlightEntries,

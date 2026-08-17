@@ -13,12 +13,18 @@ import {
 } from '../components/RecordPage/RecordPageParts';
 import { pickCapturePrompt } from '../data/capturePrompts';
 import {
-  fetchQuestionFromLLM,
-  getFallbackQuestions,
+  drawQuestionSet,
   isFrameworkId,
-  type LlmQuestionResult,
+} from '../data/reflectionQuestions';
+import {
+  fetchFrameworkFromLLM,
+  getFallbackFramework,
 } from '../services/llmServices';
-import { useRecordStore, type ReflectionDraft } from '../store/useRecordStore';
+import {
+  useRecordStore,
+  type FrameworkId,
+  type ReflectionDraft,
+} from '../store/useRecordStore';
 import './RecordEntryPage.css';
 
 const hasEnteredReflection = (draft: ReflectionDraft): boolean => Boolean(
@@ -42,21 +48,12 @@ const mockSaveDraft = (shouldFail: boolean): Promise<void> =>
     }, 520);
   });
 
-const hasThreeValidQuestions = (result: LlmQuestionResult): boolean =>
-  result.questions.length === 3
-  && result.questions.every((question) => (
-    typeof question.id === 'string'
-    && question.id.trim().length > 0
-    && typeof question.text === 'string'
-    && question.text.trim().length > 0
-  ));
-
 export default function RecordEntryPage() {
   const navigate = useNavigate();
   const { startSoftFocusTransition } = useOutletContext<AppLayoutContext>();
   const draft = useRecordStore((state) => state.draft);
   const saveRecordText = useRecordStore((state) => state.saveRecordText);
-  const updateDraft = useRecordStore((state) => state.updateDraft);
+  const setInitialQuestionSet = useRecordStore((state) => state.setInitialQuestionSet);
   const resetDraft = useRecordStore((state) => state.resetDraft);
   const initialDraftRef = useRef(draft);
   const [inputText, setInputText] = useState(() => (
@@ -157,30 +154,29 @@ export default function RecordEntryPage() {
         delayedAfterMs: 3000,
       },
       waitFor: async () => {
-        let result: LlmQuestionResult;
+        let frameworkId: FrameworkId;
         let usedFallback = false;
 
         try {
-          result = await fetchQuestionFromLLM(recordText);
-          if (!isFrameworkId(result.frameworkId) || !hasThreeValidQuestions(result)) {
-            result = getFallbackQuestions();
+          const result = await fetchFrameworkFromLLM(recordText);
+          if (!isFrameworkId(result.frameworkId)) {
+            frameworkId = getFallbackFramework().frameworkId;
             usedFallback = true;
+          } else {
+            frameworkId = result.frameworkId;
           }
         } catch {
-          result = getFallbackQuestions();
+          frameworkId = getFallbackFramework().frameworkId;
           usedFallback = true;
         }
 
-        if (!isFrameworkId(result.frameworkId)) {
-          throw new Error('No supported framework was produced.');
-        }
-
-        updateDraft({
-          frameworkId: result.frameworkId,
-          candidateQuestions: result.questions,
-          questionSource: usedFallback ? 'fallback' : 'ai',
-          selectedQuestionId: null,
-        });
+        const questionSet = drawQuestionSet(frameworkId);
+        setInitialQuestionSet(
+          frameworkId,
+          questionSet.questions,
+          usedFallback ? 'fallback' : 'ai',
+          questionSet.seenQuestionIds,
+        );
       },
       onError: () => setTransitioning(false),
     });

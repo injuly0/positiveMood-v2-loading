@@ -15,6 +15,8 @@ export interface QuestionItem {
 
 export type QuestionSource = 'ai' | 'fallback';
 
+export type SeenQuestionIdsByFramework = Partial<Record<FrameworkId, string[]>>;
+
 export interface ReflectionDraft {
   id: string;
   recordText: string;
@@ -23,6 +25,8 @@ export interface ReflectionDraft {
   questionSource?: QuestionSource | null;
   selectedQuestionId: string | null;
   answerText: string;
+  seenFrameworkIds: FrameworkId[];
+  seenQuestionIdsByFramework: SeenQuestionIdsByFramework;
   startedAt: number;
 }
 
@@ -51,6 +55,22 @@ export interface RecordState {
   beginDraft: (recordText: string) => void;
   saveRecordText: (recordText: string) => void;
   updateDraft: (patch: Partial<ReflectionDraft>) => void;
+  setInitialQuestionSet: (
+    frameworkId: FrameworkId,
+    questions: QuestionItem[],
+    source: QuestionSource,
+    seenQuestionIds: string[],
+  ) => void;
+  refreshQuestionsInCurrentFramework: (
+    questions: QuestionItem[],
+    seenQuestionIds: string[],
+  ) => void;
+  switchQuestionFramework: (
+    frameworkId: FrameworkId,
+    questions: QuestionItem[],
+    seenFrameworkIds: FrameworkId[],
+    seenQuestionIds: string[],
+  ) => void;
   selectQuestion: (questionId: string) => void;
   resetDraft: () => void;
   commitDraft: () => string | null;
@@ -62,6 +82,40 @@ export interface RecordState {
 export const initialArchive: ArchiveState = {
   entriesById: {},
   entryOrder: [],
+};
+
+const unique = <T,>(items: readonly T[]): T[] => [...new Set(items)];
+
+const hasThreeValidQuestions = (questions: readonly QuestionItem[]): boolean => (
+  questions.length === 3
+  && questions.every((question) => question.id.trim() && question.text.trim())
+  && unique(questions.map((question) => question.id)).length === 3
+);
+
+const normalizeDraft = (draft: ReflectionDraft | null | undefined): ReflectionDraft | null => {
+  if (!draft) return null;
+
+  const legacyDraft = draft as Partial<ReflectionDraft>;
+  const frameworkId = legacyDraft.frameworkId ?? null;
+  const candidateQuestions = legacyDraft.candidateQuestions ?? [];
+  const existingFrameworkIds = legacyDraft.seenFrameworkIds ?? [];
+  const seenFrameworkIds = frameworkId
+    ? unique([...existingFrameworkIds, frameworkId])
+    : unique(existingFrameworkIds);
+  const seenQuestionIdsByFramework = {
+    ...(legacyDraft.seenQuestionIdsByFramework ?? {}),
+  };
+
+  if (frameworkId && !seenQuestionIdsByFramework[frameworkId]) {
+    seenQuestionIdsByFramework[frameworkId] = candidateQuestions.map((question) => question.id);
+  }
+
+  return {
+    ...draft,
+    candidateQuestions,
+    seenFrameworkIds,
+    seenQuestionIdsByFramework,
+  };
 };
 
 export const getEnvelopeLevel = (polishCount: number): number => {
@@ -110,6 +164,8 @@ export const useRecordStore = create<RecordState>()(
               questionSource: null,
               selectedQuestionId: null,
               answerText: '',
+              seenFrameworkIds: [],
+              seenQuestionIdsByFramework: {},
               startedAt: Date.now(),
             },
           };
@@ -129,6 +185,8 @@ export const useRecordStore = create<RecordState>()(
                 questionSource: null,
                 selectedQuestionId: null,
                 answerText: '',
+                seenFrameworkIds: [],
+                seenQuestionIdsByFramework: {},
                 startedAt: Date.now(),
               },
             };
@@ -154,6 +212,71 @@ export const useRecordStore = create<RecordState>()(
             ? { draft: { ...state.draft, ...patch } }
             : state,
         );
+      },
+
+      setInitialQuestionSet: (frameworkId, questions, source, seenQuestionIds) => {
+        if (!hasThreeValidQuestions(questions)) return;
+        set((state) => {
+          if (!state.draft) return state;
+          return {
+            draft: {
+              ...state.draft,
+              frameworkId,
+              candidateQuestions: questions.map((question) => ({ ...question })),
+              questionSource: source,
+              selectedQuestionId: null,
+              seenFrameworkIds: [frameworkId],
+              seenQuestionIdsByFramework: {
+                ...state.draft.seenQuestionIdsByFramework,
+                [frameworkId]: unique(seenQuestionIds),
+              },
+            },
+          };
+        });
+      },
+
+      refreshQuestionsInCurrentFramework: (questions, seenQuestionIds) => {
+        if (!hasThreeValidQuestions(questions)) return;
+        set((state) => {
+          const frameworkId = state.draft?.frameworkId;
+          if (!state.draft || !frameworkId) return state;
+          return {
+            draft: {
+              ...state.draft,
+              candidateQuestions: questions.map((question) => ({ ...question })),
+              selectedQuestionId: null,
+              seenQuestionIdsByFramework: {
+                ...state.draft.seenQuestionIdsByFramework,
+                [frameworkId]: unique(seenQuestionIds),
+              },
+            },
+          };
+        });
+      },
+
+      switchQuestionFramework: (
+        frameworkId,
+        questions,
+        seenFrameworkIds,
+        seenQuestionIds,
+      ) => {
+        if (!hasThreeValidQuestions(questions)) return;
+        set((state) => {
+          if (!state.draft || state.draft.frameworkId === frameworkId) return state;
+          return {
+            draft: {
+              ...state.draft,
+              frameworkId,
+              candidateQuestions: questions.map((question) => ({ ...question })),
+              selectedQuestionId: null,
+              seenFrameworkIds: unique(seenFrameworkIds),
+              seenQuestionIdsByFramework: {
+                ...state.draft.seenQuestionIdsByFramework,
+                [frameworkId]: unique(seenQuestionIds),
+              },
+            },
+          };
+        });
       },
 
       selectQuestion: (questionId) => {
@@ -275,6 +398,15 @@ export const useRecordStore = create<RecordState>()(
         draft: state.draft,
         archive: state.archive,
       }),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<Pick<RecordState, 'draft' | 'archive'>>;
+        return {
+          ...currentState,
+          ...persisted,
+          draft: normalizeDraft(persisted.draft),
+          archive: persisted.archive ?? currentState.archive,
+        };
+      },
     },
   ),
 );

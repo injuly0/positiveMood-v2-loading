@@ -1,10 +1,16 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Navigate, useOutletContext } from 'react-router-dom';
 import type { AppLayoutContext } from '../components/AppLayout/AppLayout';
+import {
+  drawQuestionSet,
+  pickNextFrameworkId,
+} from '../data/reflectionQuestions';
 import { useRecordStore, type QuestionItem } from '../store/useRecordStore';
 import './QuestionSelectionPage.css';
 
 type CardNumber = 1 | 2 | 3;
+type ShuffleMode = 'questions' | 'framework';
+type SwapPhase = 'idle' | 'leaving' | 'entering';
 
 interface QuestionCardConfig {
   number: CardNumber;
@@ -201,18 +207,84 @@ export default function QuestionSelectionPage() {
   const { startSoftFocusTransition } = useOutletContext<AppLayoutContext>();
   const draft = useRecordStore((state) => state.draft);
   const selectQuestion = useRecordStore((state) => state.selectQuestion);
+  const refreshQuestions = useRecordStore(
+    (state) => state.refreshQuestionsInCurrentFramework,
+  );
+  const switchFramework = useRecordStore((state) => state.switchQuestionFramework);
   const [activeCard, setActiveCard] = useState<CardNumber | null>(null);
+  const [shuffleMode, setShuffleMode] = useState<ShuffleMode | null>(null);
+  const [swapPhase, setSwapPhase] = useState<SwapPhase>('idle');
+  const swapTimersRef = useRef<number[]>([]);
+
+  useEffect(() => () => {
+    swapTimersRef.current.forEach(window.clearTimeout);
+  }, []);
 
   if (!draft || !draft.frameworkId || draft.candidateQuestions.length !== 3) {
     return <Navigate to="/record" replace />;
   }
 
   const openQuestion = (questionId: string, trigger: HTMLElement) => {
+    if (swapPhase !== 'idle') return;
     selectQuestion(questionId);
     startSoftFocusTransition({
       trigger,
       to: '/question-answer',
     });
+  };
+
+  const runQuestionSwap = (mode: ShuffleMode) => {
+    if (swapPhase !== 'idle') return;
+
+    setActiveCard(null);
+    setShuffleMode(mode);
+    setSwapPhase('leaving');
+
+    const leaveTimer = window.setTimeout(() => {
+      const currentDraft = useRecordStore.getState().draft;
+      if (
+        !currentDraft
+        || !currentDraft.frameworkId
+        || currentDraft.candidateQuestions.length !== 3
+      ) {
+        setShuffleMode(null);
+        setSwapPhase('idle');
+        return;
+      }
+
+      if (mode === 'questions') {
+        const frameworkId = currentDraft.frameworkId;
+        const questionSet = drawQuestionSet(
+          frameworkId,
+          currentDraft.seenQuestionIdsByFramework[frameworkId] ?? [],
+          currentDraft.candidateQuestions.map((question) => question.id),
+        );
+        refreshQuestions(questionSet.questions, questionSet.seenQuestionIds);
+      } else {
+        const frameworkSet = pickNextFrameworkId(
+          currentDraft.frameworkId,
+          currentDraft.seenFrameworkIds,
+        );
+        const questionSet = drawQuestionSet(
+          frameworkSet.frameworkId,
+          currentDraft.seenQuestionIdsByFramework[frameworkSet.frameworkId] ?? [],
+        );
+        switchFramework(
+          frameworkSet.frameworkId,
+          questionSet.questions,
+          frameworkSet.seenFrameworkIds,
+          questionSet.seenQuestionIds,
+        );
+      }
+
+      setSwapPhase('entering');
+      const enterTimer = window.setTimeout(() => {
+        setShuffleMode(null);
+        setSwapPhase('idle');
+      }, 360);
+      swapTimersRef.current.push(enterTimer);
+    }, 180);
+    swapTimersRef.current.push(leaveTimer);
   };
 
   return (
@@ -233,7 +305,11 @@ export default function QuestionSelectionPage() {
 
         <OriginalRecord recordText={draft.recordText} />
 
-        <section className="qs-rack" aria-label="请选择一个继续深思的问题">
+        <section
+          className="qs-rack"
+          aria-label="请选择一个继续深思的问题"
+          data-swap-phase={swapPhase}
+        >
           <img className="qs-rack-back" src={`${ASSET_ROOT}/rack-back.png`} alt="" draggable="false" />
 
           {CARD_CONFIGS.map((config, index) => {
@@ -267,13 +343,30 @@ export default function QuestionSelectionPage() {
         </section>
 
         <nav className="qs-shuffle-actions" aria-label="更换问题">
-          <button type="button" className="qs-shuffle-button">
+          <button
+            type="button"
+            className="qs-shuffle-button"
+            disabled={swapPhase !== 'idle'}
+            onClick={() => runQuestionSwap('framework')}
+          >
             <span aria-hidden="true">↻</span> 换一个深思的角度
           </button>
-          <button type="button" className="qs-shuffle-button">
+          <button
+            type="button"
+            className="qs-shuffle-button"
+            disabled={swapPhase !== 'idle'}
+            onClick={() => runQuestionSwap('questions')}
+          >
             <span aria-hidden="true">↻</span> 换一组问题
           </button>
         </nav>
+        <p className="qs-shuffle-status" role="status" aria-live="polite">
+          {swapPhase === 'idle'
+            ? ''
+            : shuffleMode === 'framework'
+              ? '正在换一个深思的角度'
+              : '正在换一组问题'}
+        </p>
       </section>
     </main>
   );

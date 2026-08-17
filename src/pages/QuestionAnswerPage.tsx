@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import type { AppLayoutContext } from '../components/AppLayout/AppLayout';
-import { FRAMEWORKS } from '../services/llmServices';
+import { FRAMEWORKS } from '../data/reflectionQuestions';
 import { useRecordStore, type FrameworkId } from '../store/useRecordStore';
 import './QuestionAnswerPage.css';
 
