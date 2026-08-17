@@ -2,6 +2,7 @@
 
 ## 项目规范
 
+- [项目文档索引](docs/README.md)：功能开发前先从这里选择需要阅读的产品、页面、状态、后端和部署规范。
 - [`/letter/` 部署路径与 URL 规范](docs/deployment-path-convention.md)：后续涉及路由、静态资源、Vite 构建或 Nginx 部署的代码生成必须遵守。
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
