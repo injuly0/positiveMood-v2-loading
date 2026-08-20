@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { createId } from '../utils/createId';
 import {
   getQuestionCardVariantByIndex,
   isQuestionCardVariant,
@@ -189,7 +190,7 @@ export const useRecordStore = create<RecordState>()(
           if (state.draft) return state;
           return {
             draft: {
-              id: crypto.randomUUID(),
+              id: createId(),
               recordText: trimmedRecordText,
               frameworkId: null,
               candidateQuestions: [],
@@ -211,7 +212,7 @@ export const useRecordStore = create<RecordState>()(
             if (!recordText.trim()) return state;
             return {
               draft: {
-                id: crypto.randomUUID(),
+                id: createId(),
                 recordText,
                 frameworkId: null,
                 candidateQuestions: [],
@@ -351,7 +352,7 @@ export const useRecordStore = create<RecordState>()(
         }
 
         const entry: MemoryEntry = {
-          id: crypto.randomUUID(),
+          id: createId(),
           recordText,
           frameworkId: draft.frameworkId,
           question: { ...selectedQuestion },
