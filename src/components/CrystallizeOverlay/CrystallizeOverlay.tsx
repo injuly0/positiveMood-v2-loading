@@ -15,6 +15,7 @@ interface Props {
  *   1.35 → 1.9s  白屏渐隐消失（0.55s 平滑过渡，信念之树浮现）
  */
 const TOTAL_DURATION = 2000;
+const REDUCED_MOTION_DURATION = 250;
 const PARTICLE_COUNT = 28;
 
 interface Particle {
@@ -39,6 +40,10 @@ function generateParticles(): Particle[] {
 
 export default function CrystallizeOverlay({ onDone }: Props) {
   const doneCalled = useRef(false);
+  const prefersReducedMotion = useMemo(
+    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    [],
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -46,17 +51,21 @@ export default function CrystallizeOverlay({ onDone }: Props) {
         doneCalled.current = true;
         onDone();
       }
-    }, TOTAL_DURATION);
+    }, prefersReducedMotion ? REDUCED_MOTION_DURATION : TOTAL_DURATION);
 
     return () => clearTimeout(timer);
-  }, [onDone]);
+  }, [onDone, prefersReducedMotion]);
 
   const particles = useMemo(() => generateParticles(), []);
 
   return (
-    <div className="crystallize-overlay">
+    <div
+      className="crystallize-overlay"
+      data-reduced-motion={prefersReducedMotion}
+      aria-hidden="true"
+    >
       {/* 粒子层 */}
-      {particles.map((p) => (
+      {!prefersReducedMotion && particles.map((p) => (
         <div
           key={p.id}
           className="crystallize-particle"

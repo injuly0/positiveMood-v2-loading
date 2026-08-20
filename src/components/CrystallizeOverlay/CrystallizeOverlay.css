@@ -135,3 +135,28 @@
     opacity: 0;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .crystallize-overlay[data-reduced-motion="true"] .crystallize-core {
+    display: none;
+  }
+
+  .crystallize-overlay[data-reduced-motion="true"] .crystallize-white-flash {
+    background: #fffaf7;
+    animation: reducedCrystallize 250ms ease-in-out both;
+  }
+}
+
+@keyframes reducedCrystallize {
+  0% {
+    opacity: 0;
+  }
+
+  48% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}

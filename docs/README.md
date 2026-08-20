@@ -36,6 +36,10 @@
 
 当前 Zustand 数据模型与持久化设计。定义草稿、记忆档案、业务 action、selector、跨路由瞬时动画边界和持久化 key。
 
+### [`zustand-data-flow-notes.md`](zustand-data-flow-notes.md)
+
+Zustand 数据流与业务动作学习笔记。使用业务语言和完整示例解释 draft、MemoryEntry、archive、commitDraft、Persist、各页面 action，以及展示页设计前需要确定的数据问题。
+
 ## 3. 页面设计与功能规范
 
 ### [`InitializationPage (首页场景容器)-具体实现文档.md`](<InitializationPage (首页场景容器)-具体实现文档.md>)
@@ -60,6 +64,12 @@
 
 定义三道问题的展示、“换一组问题”和“换一个深思角度”的行为、前端题库来源、Zustand 与页面瞬时状态边界，以及 Qwen 的调用边界。
 
+### [`question-answer-frontend-spec.md`](question-answer-frontend-spec.md)
+
+状态：当前问题回答页视觉与功能规范。
+
+定义 1440 × 810 场景舞台、所选问题的粉绿蓝卡片颜色延续、原始记录展示、回答输入、空白引导语、重新选择、收藏提交、数据守卫与结晶转场。
+
 ### [`待改-question-selection-page-design.md`](待改-question-selection-page-design.md)
 
 状态：历史稿，已停止作为实现依据。
@@ -68,9 +78,9 @@
 
 ### [`待改-question-answer-page-design.md`](待改-question-answer-page-design.md)
 
-状态：待讨论稿，本轮不修改，也不作为当前实现依据。
+状态：历史稿，已由 `question-answer-frontend-spec.md` 取代，不作为当前实现依据。
 
-暂存问题回答页的早期组件树、数据流、返回路径、空数据守卫和结晶动画设想。回答页视觉与所选卡片颜色的使用方式尚未讨论清楚，后续应先形成新 Spec，再实施页面改造。
+保留问题回答页早期的组件树、数据流、返回路径、空数据守卫和结晶动画设想，仅用于理解历史背景。
 
 ## 4. 跨页面动效
 
@@ -100,7 +110,7 @@ Qwen 框架识别后端实现规范。定义后端职责、允许返回的框架
 | 修改首页 | `InitializationPage (首页场景容器)-具体实现文档.md`、`project-visual-metaphor.md` |
 | 修改记录页 | `record-page-spec-v6.md`；涉及提交转场时再读 v5 转场补充与统一转场规范 |
 | 修改问题选择页 | `question-selection-frontend-spec.md`、`reflection-question-bank.md`、`zustand-store-design.md` |
-| 修改问题回答页 | 先与用户确认并形成新 Spec；`待改-question-answer-page-design.md` 仅供历史参考，状态数据边界参照 `zustand-store-design.md` |
+| 修改问题回答页 | `question-answer-frontend-spec.md`、`zustand-store-design.md`；涉及转场时再读统一柔光规范，`待改-question-answer-page-design.md` 仅供历史参考 |
 | 修改页面转场 | `柔光聚焦页面转场规范.md`；异步提交场景再读 v5 转场补充 |
 | 接入或修改 Qwen 后端 | `qwen-framework-backend-implementation.md`、`reflection-question-bank.md` |
 | 修改路由、资源、构建或部署 | `deployment-path-convention.md` |

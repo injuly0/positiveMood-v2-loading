@@ -1,5 +1,7 @@
 # QuestionAnswerPage 设计方案
 
+> 状态：历史稿，已由 [`question-answer-frontend-spec.md`](question-answer-frontend-spec.md) 取代，不再作为当前实现依据。
+
 ## 一、架构决策
 
 | 决策点 | 方案 |

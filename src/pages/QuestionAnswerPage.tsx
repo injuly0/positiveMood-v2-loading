@@ -1,32 +1,52 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, type CSSProperties, type MouseEvent } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import type { AppLayoutContext } from '../components/AppLayout/AppLayout';
-import { FRAMEWORKS } from '../data/reflectionQuestions';
-import { useRecordStore, type FrameworkId } from '../store/useRecordStore';
+import type { QuestionCardVariant } from '../data/questionCardVariants';
+import { useRecordStore } from '../store/useRecordStore';
+import { assetUrl } from '../utils/assetUrl';
 import './QuestionAnswerPage.css';
 
-const PLACEHOLDERS: Record<FrameworkId, string> = {
-  framework1: '回顾那个最想放弃的瞬间，写下你想对自己说的话…',
-  framework2: '用一个画面或一段对话，描述你展现出的那份力量…',
-  framework3: '那个瞬间，你内心真正被满足的是什么…',
-  framework4: '这份温暖从哪里来，带你去到了哪里…',
-  framework5: '闭上眼睛，让那个画面再次浮现，写下你的感受…',
+const ASSET_ROOT = assetUrl('question-answer');
+
+const ANSWER_ASSETS = {
+  background: `${ASSET_ROOT}/background.png`,
+  brassRack: `${ASSET_ROOT}/brass-rack.png`,
+  laceFrame: `${ASSET_ROOT}/lace-frame.png`,
+  questionCard: `${ASSET_ROOT}/question-card-base.png`,
 };
+
+const CARD_TINTS: Record<QuestionCardVariant, string> = {
+  // 底色会与 38% 的暖白基础素材合成，因此使用补偿色匹配选题页最终观感。
+  pink: '#d9bfc0',
+  green: '#beccaf',
+  blue: '#b6ccd3',
+};
+
+const ANSWER_PLACEHOLDER =
+  '顺着这个问题，再回头看一眼刚刚写下的事。\n'
+  + '留意此刻新出现的感受、联系或理解，\n'
+  + '从最先浮现的那句话开始写';
 
 export default function QuestionAnswerPage() {
   const navigate = useNavigate();
-  const { startCrystallizing } = useOutletContext<AppLayoutContext>();
+  const { startCrystallizing, startSoftFocusTransition } =
+    useOutletContext<AppLayoutContext>();
   const draft = useRecordStore((state) => state.draft);
   const updateDraft = useRecordStore((state) => state.updateDraft);
   const commitDraft = useRecordStore((state) => state.commitDraft);
-  // commitDraft 会同步清空草稿；该标记避免空数据守卫覆盖成功提交后的目标路由。
-  const isSubmittingRef = useRef(false);
 
-  // 仅控制原始记录区域在当前页面是否展开。
-  const [recordExpanded, setRecordExpanded] = useState(false);
+  // commitDraft 会同步清空草稿；该标记避免守卫覆盖成功提交后的目标路由。
+  const isSubmittingRef = useRef(false);
+  const answerInputRef = useRef<HTMLTextAreaElement>(null);
 
   const selectedQuestion = draft?.candidateQuestions.find(
     (question) => question.id === draft.selectedQuestionId,
+  );
+  const canRenderPage = Boolean(
+    draft?.recordText.trim()
+    && draft.frameworkId
+    && selectedQuestion
+    && draft.selectedCardVariant,
   );
 
   useEffect(() => {
@@ -34,15 +54,49 @@ export default function QuestionAnswerPage() {
 
     if (!draft?.recordText.trim()) {
       navigate('/record', { replace: true });
-    } else if (!draft.frameworkId || !selectedQuestion) {
+    } else if (!draft.frameworkId || !selectedQuestion || !draft.selectedCardVariant) {
       navigate('/question-selection', { replace: true });
     }
   }, [draft, navigate, selectedQuestion]);
 
-  // 守卫未通过时不渲染，避免重定向生效前短暂显示残缺页面。
-  if (!draft?.recordText.trim() || !draft.frameworkId || !selectedQuestion) return null;
+  useEffect(() => {
+    if (!canRenderPage) return undefined;
+
+    const frameId = window.requestAnimationFrame(() => {
+      const input = answerInputRef.current;
+      if (!input) return;
+
+      input.focus({ preventScroll: true });
+      const caretPosition = input.value.length;
+      input.setSelectionRange(caretPosition, caretPosition);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [canRenderPage, selectedQuestion?.id]);
+
+  if (
+    !draft?.recordText.trim()
+    || !draft.frameworkId
+    || !selectedQuestion
+    || !draft.selectedCardVariant
+  ) {
+    return null;
+  }
+
+  const questionCardStyle = {
+    '--qa-card-tint': CARD_TINTS[draft.selectedCardVariant],
+  } as CSSProperties;
+
+  const handleReselect = (event: MouseEvent<HTMLButtonElement>) => {
+    startSoftFocusTransition({
+      trigger: event.currentTarget,
+      to: '/question-selection',
+    });
+  };
 
   const handleSubmit = () => {
+    if (!draft.answerText.trim() || isSubmittingRef.current) return;
+
     // 必须在 commitDraft 之前设置；归档会同步触发当前页面重新渲染。
     isSubmittingRef.current = true;
     const entryId = commitDraft();
@@ -56,59 +110,115 @@ export default function QuestionAnswerPage() {
   };
 
   return (
-    <div className="qa-page">
-      <div className="qa-step">
-        <span className="qa-step-label">反思书写</span>
-      </div>
+    <main className="qa-page">
+      <div className="qa-stage">
+        <img
+          className="qa-background"
+          src={ANSWER_ASSETS.background}
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+        />
 
-      <div className="qa-context">
-        <span className="qa-framework-tag">{FRAMEWORKS[draft.frameworkId].name}</span>
-        <div className="qa-record-section">
+        <img
+          className="qa-brass-rack"
+          src={ANSWER_ASSETS.brassRack}
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+        />
+
+        <section className="qa-question-section" aria-labelledby="qa-question-heading">
+          <h2 id="qa-question-heading" className="qa-section-title qa-question-title">
+            选择的问题
+          </h2>
+          <button type="button" className="qa-reselect-button" onClick={handleReselect}>
+            <span aria-hidden="true">←</span>
+            重新选择
+          </button>
+
+          <div
+            className="qa-selected-question-card"
+            data-variant={draft.selectedCardVariant}
+            style={questionCardStyle}
+          >
+            <span className="qa-question-card-tint" aria-hidden="true" />
+            <img
+              className="qa-question-card-image"
+              src={ANSWER_ASSETS.questionCard}
+              alt=""
+              aria-hidden="true"
+              draggable="false"
+            />
+            <p
+              id="qa-selected-question"
+              className="qa-selected-question-text"
+              tabIndex={0}
+              aria-label={`选择的问题：${selectedQuestion.text}`}
+            >
+              {selectedQuestion.text}
+            </p>
+          </div>
+        </section>
+
+        <section className="qa-record-section" aria-labelledby="qa-record-heading">
+          <h2 id="qa-record-heading" className="qa-section-title qa-record-title">
+            刚刚写下的
+          </h2>
+          <div className="qa-record-paper">
+            <div className="qa-record-paper-inner">
+              <div
+                className="qa-record-scroll"
+                role="region"
+                tabIndex={0}
+                aria-label="刚刚写下的原始记录"
+              >
+                <p>{draft.recordText}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="qa-answer-section" aria-labelledby="qa-answer-heading">
+          <h1 id="qa-answer-heading" className="qa-section-title qa-answer-title">
+            写下回答
+          </h1>
+          <span className="qa-answer-title-rule" aria-hidden="true" />
+
+          <div className="qa-answer-paper" aria-hidden="true" />
+          <div className="qa-answer-editor-surface" aria-hidden="true" />
+          <img
+            className="qa-lace-frame"
+            src={ANSWER_ASSETS.laceFrame}
+            alt=""
+            aria-hidden="true"
+            draggable="false"
+          />
+
+          <label className="qa-sr-only" htmlFor="qa-answer-input">
+            写下回答
+          </label>
+          <textarea
+            id="qa-answer-input"
+            ref={answerInputRef}
+            className="qa-answer-input"
+            value={draft.answerText}
+            onChange={(event) => updateDraft({ answerText: event.target.value })}
+            placeholder={ANSWER_PLACEHOLDER}
+            aria-describedby="qa-selected-question"
+          />
+
           <button
             type="button"
-            className="qa-record-toggle"
-            onClick={() => setRecordExpanded((value) => !value)}
+            className="qa-submit-button"
+            disabled={!draft.answerText.trim()}
+            onClick={handleSubmit}
           >
-            你的记录 <span className="qa-chevron">{recordExpanded ? '▾' : '▸'}</span>
+            <span aria-hidden="true">→</span>
+            收藏这份回答
           </button>
-          {recordExpanded && <p className="qa-record-text">{draft.recordText}</p>}
-        </div>
-
-        <div className="qa-question-card">
-          <span className="qa-question-badge">此刻，请回答</span>
-          <p className="qa-question-text">{selectedQuestion.text}</p>
-        </div>
+        </section>
       </div>
-
-      <div className="qa-editor">
-        <p className="qa-editor-hint">{PLACEHOLDERS[draft.frameworkId]}</p>
-        <textarea
-          className="qa-textarea"
-          value={draft.answerText}
-          onChange={(event) => updateDraft({ answerText: event.target.value })}
-          placeholder={PLACEHOLDERS[draft.frameworkId]}
-          rows={6}
-        />
-        <span className="qa-charcount">{draft.answerText.length} 字</span>
-      </div>
-
-      <div className="qa-actions">
-        <button
-          type="button"
-          className="qa-btn qa-btn--primary"
-          disabled={!draft.answerText.trim()}
-          onClick={handleSubmit}
-        >
-          生成我的反思
-        </button>
-        <button
-          type="button"
-          className="qa-btn qa-btn--ghost"
-          onClick={() => navigate('/question-selection')}
-        >
-          ← 重新选一个问题
-        </button>
-      </div>
-    </div>
+    </main>
   );
 }
