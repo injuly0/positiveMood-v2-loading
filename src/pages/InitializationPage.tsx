@@ -84,7 +84,6 @@ export default function InitializationPage({
             alt=""
             aria-hidden="true"
             decoding="async"
-            fetchPriority="low"
             onLoad={() => markFocusAssetLoaded(state)}
           />
         ))}
