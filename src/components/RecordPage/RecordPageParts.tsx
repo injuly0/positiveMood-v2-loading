@@ -14,7 +14,7 @@ export function RecordPageBackground() {
   return (
     <img
       className="record-page-background"
-      src={assetUrl('record/record-background.png')}
+      src={assetUrl('record/record-background.webp')}
       alt=""
       aria-hidden="true"
     />
@@ -25,7 +25,7 @@ export function LetterArtworkImage() {
   return (
     <img
       className="letter-artwork-image"
-      src={assetUrl('record/letter-artwork.png')}
+      src={assetUrl('record/letter-artwork.webp')}
       alt=""
       aria-hidden="true"
     />

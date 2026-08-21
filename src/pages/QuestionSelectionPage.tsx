@@ -13,12 +13,19 @@ import {
 } from '../data/questionCardVariants';
 import { useRecordStore, type QuestionItem } from '../store/useRecordStore';
 import { assetUrl } from '../utils/assetUrl';
+import { preloadImages } from '../utils/preloadImages';
 import './QuestionSelectionPage.css';
 
 type ShuffleMode = 'questions' | 'framework';
 type SwapPhase = 'idle' | 'leaving' | 'entering';
 
 const ASSET_ROOT = assetUrl('question-selection');
+const QUESTION_ANSWER_ASSETS = [
+  assetUrl('question-answer/background.webp'),
+  assetUrl('question-answer/brass-rack.webp'),
+  assetUrl('question-answer/lace-frame.webp'),
+  assetUrl('question-answer/question-card-base.webp'),
+] as const;
 
 interface QuestionCardVisualProps {
   config: QuestionCardConfig;
@@ -64,7 +71,7 @@ function QuestionCardVisual({
             <g transform="rotate(6 0 0)">
               <image href={config.numberSrc} x="60" y="26" width="17" height="26" />
               <image
-                href={`${ASSET_ROOT}/divider-short.png`}
+                href={`${ASSET_ROOT}/divider-short.webp`}
                 x="97"
                 y="25"
                 width="190"
@@ -79,14 +86,14 @@ function QuestionCardVisual({
         {config.number === 1 ? (
           <img
             className="qs-card-one-divider"
-            src={`${ASSET_ROOT}/card-1-divider.png`}
+            src={`${ASSET_ROOT}/card-1-divider.webp`}
             alt=""
             draggable="false"
           />
         ) : config.number === 2 ? (
           <img
             className="qs-card-divider"
-            src={`${ASSET_ROOT}/divider-short.png`}
+            src={`${ASSET_ROOT}/divider-short.webp`}
             alt=""
             draggable="false"
           />
@@ -159,13 +166,13 @@ function OriginalRecord({ recordText }: OriginalRecordProps) {
       <div className="qs-record-paper-wrap">
         <img
           className="qs-record-paper"
-          src={`${ASSET_ROOT}/record-paper.png`}
+          src={`${ASSET_ROOT}/record-paper.webp`}
           alt=""
           draggable="false"
         />
         <img
           className="qs-record-inner"
-          src={`${ASSET_ROOT}/record-inner.png`}
+          src={`${ASSET_ROOT}/record-inner.webp`}
           alt=""
           draggable="false"
         />
@@ -208,6 +215,8 @@ export default function QuestionSelectionPage() {
     startSoftFocusTransition({
       trigger,
       to: '/question-answer',
+      beforeNavigate: () => { void preloadImages(QUESTION_ANSWER_ASSETS); },
+      waitFor: () => preloadImages(QUESTION_ANSWER_ASSETS),
     });
   };
 
@@ -270,7 +279,7 @@ export default function QuestionSelectionPage() {
       <section className="qs-stage" aria-labelledby="qs-page-title">
         <img
           className="qs-background"
-          src={`${ASSET_ROOT}/background.png`}
+          src={`${ASSET_ROOT}/background.webp`}
           alt=""
           draggable="false"
         />
@@ -288,7 +297,7 @@ export default function QuestionSelectionPage() {
           aria-label="请选择一个继续深思的问题"
           data-swap-phase={swapPhase}
         >
-          <img className="qs-rack-back" src={`${ASSET_ROOT}/rack-back.png`} alt="" draggable="false" />
+          <img className="qs-rack-back" src={`${ASSET_ROOT}/rack-back.webp`} alt="" draggable="false" />
 
           {QUESTION_CARD_CONFIGS.map((config, index) => {
             const question = draft.candidateQuestions[index];
@@ -307,13 +316,13 @@ export default function QuestionSelectionPage() {
 
           <img
             className="qs-rack-middle"
-            src={`${ASSET_ROOT}/rack-middle.png`}
+            src={`${ASSET_ROOT}/rack-middle.webp`}
             alt=""
             draggable="false"
           />
           <img
             className="qs-rack-front"
-            src={`${ASSET_ROOT}/rack-front.png`}
+            src={`${ASSET_ROOT}/rack-front.webp`}
             alt=""
             draggable="false"
           />

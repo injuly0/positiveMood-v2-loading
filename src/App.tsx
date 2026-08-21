@@ -17,10 +17,15 @@ import WarmLightTransitionLayer, {
   type SoftFocusTransitionState,
   type StartSoftFocusTransition,
 } from './components/WarmLightTransition/WarmLightTransitionLayer';
-import { APP_BASE_PATH } from './utils/assetUrl';
+import { APP_BASE_PATH, assetUrl } from './utils/assetUrl';
+import { preloadImages } from './utils/preloadImages';
 import './App.css';
 
 const LIGHT_SIZE = 28;
+const RECORD_PAGE_ASSETS = [
+  assetUrl('record/record-background.webp'),
+  assetUrl('record/letter-artwork.webp'),
+] as const;
 
 const waitForRoutePaint = (): Promise<void> => new Promise((resolve) => {
   window.requestAnimationFrame(() => {
@@ -169,7 +174,16 @@ function AppRoutes() {
   }, [clearTransitionTimers, navigate]);
 
   const startHomeRecordTransition = useCallback((trigger: HTMLElement) => {
-    startSoftFocusTransition({ trigger, to: '/record' });
+    startSoftFocusTransition({
+      trigger,
+      to: '/record',
+      beforeNavigate: () => { void preloadImages(RECORD_PAGE_ASSETS); },
+      waitFor: () => preloadImages(RECORD_PAGE_ASSETS),
+    });
+  }, [startSoftFocusTransition]);
+
+  const startHomeArchiveTransition = useCallback((trigger: HTMLElement) => {
+    startSoftFocusTransition({ trigger, to: '/display-archive' });
   }, [startSoftFocusTransition]);
 
   return (
@@ -181,6 +195,7 @@ function AppRoutes() {
             <InitializationPage
               transitionState={transitionState}
               onStartRecordTransition={startHomeRecordTransition}
+              onStartArchiveTransition={startHomeArchiveTransition}
             />
           )}
         />

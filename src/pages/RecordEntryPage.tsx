@@ -26,6 +26,28 @@ import {
   type ReflectionDraft,
 } from '../store/useRecordStore';
 import './RecordEntryPage.css';
+import { assetUrl } from '../utils/assetUrl';
+import { preloadImages } from '../utils/preloadImages';
+
+const QUESTION_SELECTION_ASSETS = [
+  assetUrl('question-selection/background.webp'),
+  assetUrl('question-selection/record-paper.webp'),
+  assetUrl('question-selection/record-inner.webp'),
+  assetUrl('question-selection/rack-back.webp'),
+  assetUrl('question-selection/rack-middle.webp'),
+  assetUrl('question-selection/rack-front.webp'),
+  assetUrl('question-selection/number-1.webp'),
+  assetUrl('question-selection/number-2.webp'),
+  assetUrl('question-selection/number-3.webp'),
+  assetUrl('question-selection/card-1-pink.webp'),
+  assetUrl('question-selection/card-1-texture.webp'),
+  assetUrl('question-selection/card-1-divider.webp'),
+  assetUrl('question-selection/card-2-green.webp'),
+  assetUrl('question-selection/card-2-texture.webp'),
+  assetUrl('question-selection/card-3-blue.webp'),
+  assetUrl('question-selection/card-3-texture.webp'),
+  assetUrl('question-selection/divider-short.webp'),
+] as const;
 
 const hasEnteredReflection = (draft: ReflectionDraft): boolean => Boolean(
   draft.frameworkId
@@ -147,6 +169,7 @@ export default function RecordEntryPage() {
     const started = startSoftFocusTransition({
       trigger,
       to: '/question-selection',
+      beforeNavigate: () => { void preloadImages(QUESTION_SELECTION_ASSETS); },
       minimumDurationMs: 1200,
       content: {
         message: '正在读这封信，并为你寻找三个问题',
@@ -154,11 +177,15 @@ export default function RecordEntryPage() {
         delayedAfterMs: 3000,
       },
       waitFor: async () => {
+        const questionSelectionReady = preloadImages(QUESTION_SELECTION_ASSETS);
         let frameworkId: FrameworkId;
         let usedFallback = false;
 
         try {
-          const result = await fetchFrameworkFromLLM(recordText);
+          const [result] = await Promise.all([
+            fetchFrameworkFromLLM(recordText),
+            questionSelectionReady,
+          ]);
           if (!isFrameworkId(result.frameworkId)) {
             frameworkId = getFallbackFramework().frameworkId;
             usedFallback = true;
@@ -166,6 +193,7 @@ export default function RecordEntryPage() {
             frameworkId = result.frameworkId;
           }
         } catch {
+          await questionSelectionReady;
           frameworkId = getFallbackFramework().frameworkId;
           usedFallback = true;
         }

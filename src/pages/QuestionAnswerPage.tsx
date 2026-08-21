@@ -9,10 +9,10 @@ import './QuestionAnswerPage.css';
 const ASSET_ROOT = assetUrl('question-answer');
 
 const ANSWER_ASSETS = {
-  background: `${ASSET_ROOT}/background.png`,
-  brassRack: `${ASSET_ROOT}/brass-rack.png`,
-  laceFrame: `${ASSET_ROOT}/lace-frame.png`,
-  questionCard: `${ASSET_ROOT}/question-card-base.png`,
+  background: `${ASSET_ROOT}/background.webp`,
+  brassRack: `${ASSET_ROOT}/brass-rack.webp`,
+  laceFrame: `${ASSET_ROOT}/lace-frame.webp`,
+  questionCard: `${ASSET_ROOT}/question-card-base.webp`,
 };
 
 const CARD_TINTS: Record<QuestionCardVariant, string> = {

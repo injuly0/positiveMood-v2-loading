@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { assetUrl } from '../utils/assetUrl';
 import './InitializationPage.css';
 
@@ -9,6 +8,7 @@ type FocusSceneState = Exclude<SceneState, 'initial'>;
 interface InitializationPageProps {
   transitionState: 'idle' | 'covering' | 'covered' | 'revealing';
   onStartRecordTransition: (trigger: HTMLElement) => void;
+  onStartArchiveTransition: (trigger: HTMLElement) => void;
 }
 
 const sceneAssets: Record<SceneState, string> = {
@@ -29,8 +29,8 @@ const isTouchLikeDevice = () =>
 export default function InitializationPage({
   transitionState,
   onStartRecordTransition,
+  onStartArchiveTransition,
 }: InitializationPageProps) {
-  const navigate = useNavigate();
   const [sceneState, setSceneState] = useState<SceneState>('initial');
   const [shouldPreloadFocusAssets, setShouldPreloadFocusAssets] = useState(false);
   const [loadedFocusAssets, setLoadedFocusAssets] = useState<Record<FocusSceneState, boolean>>({
@@ -46,13 +46,17 @@ export default function InitializationPage({
     ));
   };
 
-  const activateScene = (nextState: Exclude<SceneState, 'initial'>, route: string) => {
+  const activateScene = (
+    nextState: Exclude<SceneState, 'initial'>,
+    transition: (trigger: HTMLElement) => void,
+    trigger: HTMLElement,
+  ) => {
     if (isTouchLikeDevice() && sceneState !== nextState) {
       setSceneState(nextState);
       return;
     }
 
-    navigate(route);
+    transition(trigger);
   };
 
   const resetPreview = () => setSceneState('initial');
@@ -100,7 +104,7 @@ export default function InitializationPage({
           onMouseEnter={() => setSceneState('archive')}
           onFocus={() => setSceneState('archive')}
           onBlur={resetPreview}
-          onClick={() => activateScene('archive', '/display-archive')}
+          onClick={(event) => activateScene('archive', onStartArchiveTransition, event.currentTarget)}
         >
           <span className="home-scene__hotspot-label">进入回味展厅</span>
         </button>
