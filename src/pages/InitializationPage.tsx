@@ -4,6 +4,7 @@ import { assetUrl } from '../utils/assetUrl';
 import './InitializationPage.css';
 
 type SceneState = 'initial' | 'record' | 'archive';
+type FocusSceneState = Exclude<SceneState, 'initial'>;
 
 interface InitializationPageProps {
   transitionState: 'idle' | 'covering' | 'covered' | 'revealing';
@@ -11,9 +12,9 @@ interface InitializationPageProps {
 }
 
 const sceneAssets: Record<SceneState, string> = {
-  initial: assetUrl('home/initial-background.png'),
-  record: assetUrl('home/record-focus.png'),
-  archive: assetUrl('home/archive-focus.png'),
+  initial: assetUrl('home/initial-background.webp'),
+  record: assetUrl('home/record-focus.webp'),
+  archive: assetUrl('home/archive-focus.webp'),
 };
 
 const sceneCopy: Record<SceneState, string> = {
@@ -31,6 +32,19 @@ export default function InitializationPage({
 }: InitializationPageProps) {
   const navigate = useNavigate();
   const [sceneState, setSceneState] = useState<SceneState>('initial');
+  const [shouldPreloadFocusAssets, setShouldPreloadFocusAssets] = useState(false);
+  const [loadedFocusAssets, setLoadedFocusAssets] = useState<Record<FocusSceneState, boolean>>({
+    record: false,
+    archive: false,
+  });
+
+  const focusImageReady = sceneState === 'initial' || loadedFocusAssets[sceneState];
+
+  const markFocusAssetLoaded = (state: FocusSceneState) => {
+    setLoadedFocusAssets((current) => (
+      current[state] ? current : { ...current, [state]: true }
+    ));
+  };
 
   const activateScene = (nextState: Exclude<SceneState, 'initial'>, route: string) => {
     if (isTouchLikeDevice() && sceneState !== nextState) {
@@ -48,16 +62,30 @@ export default function InitializationPage({
       <section
         className="home-scene"
         data-scene-state={sceneState}
+        data-focus-image-ready={focusImageReady ? 'true' : 'false'}
         aria-label="私人信件博物馆入口"
         onMouseLeave={resetPreview}
       >
-        {(Object.keys(sceneAssets) as SceneState[]).map((state) => (
+        <img
+          className="home-scene__image home-scene__image--initial"
+          src={sceneAssets.initial}
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          fetchPriority="high"
+          onLoad={() => setShouldPreloadFocusAssets(true)}
+        />
+
+        {shouldPreloadFocusAssets && (['record', 'archive'] as FocusSceneState[]).map((state) => (
           <img
             key={state}
             className={`home-scene__image home-scene__image--${state}`}
             src={sceneAssets[state]}
             alt=""
             aria-hidden="true"
+            decoding="async"
+            fetchPriority="low"
+            onLoad={() => markFocusAssetLoaded(state)}
           />
         ))}
 
