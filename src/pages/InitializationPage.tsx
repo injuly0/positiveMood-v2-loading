@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { assetUrl } from '../utils/assetUrl';
+import SiteFooter from '../components/SiteFooter/SiteFooter';
 import './InitializationPage.css';
 
 type SceneState = 'initial' | 'record' | 'archive';
@@ -131,6 +132,7 @@ export default function InitializationPage({
           {sceneState === 'archive' && '已聚焦回味展厅，点击进入参观'}
         </p>
       </section>
+      <SiteFooter />
     </main>
   );
 }

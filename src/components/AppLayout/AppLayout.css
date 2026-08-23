@@ -1,4 +1,23 @@
 .app-layout {
+  --page-surface: #f8f4ff;
   position: relative;
-  min-height: 100vh;
+  min-height: calc(100vh + 72px);
+  background: var(--page-surface);
+}
+
+.app-layout:has(.record-page),
+.app-layout:has(.qs-page),
+.app-layout:has(.qa-page) {
+  --page-surface: #251911;
+}
+
+.app-layout:has(.record-page) > .site-footer,
+.app-layout:has(.qs-page) > .site-footer,
+.app-layout:has(.qa-page) > .site-footer {
+  position: absolute;
+  top: 100vh;
+  left: 50%;
+  width: min(100vw, calc(100vh * 16 / 9));
+  transform: translateX(-50%);
+  z-index: 91;
 }

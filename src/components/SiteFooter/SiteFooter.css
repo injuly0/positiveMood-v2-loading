@@ -1,0 +1,36 @@
+.site-footer {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 72px;
+  padding: 18px 24px;
+  box-sizing: border-box;
+  color: rgb(92 70 57 / 72%);
+  background: var(--page-surface, #f5eadc);
+  font-family: var(--font-sans-sc);
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.site-footer a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.site-footer a:hover,
+.site-footer a:focus-visible {
+  color: rgb(92 70 57 / 100%);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.site-footer a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}

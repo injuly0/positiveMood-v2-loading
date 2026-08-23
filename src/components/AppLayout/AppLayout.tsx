@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import CrystallizeOverlay from '../CrystallizeOverlay/CrystallizeOverlay';
+import SiteFooter from '../SiteFooter/SiteFooter';
 import type { StartSoftFocusTransition } from '../WarmLightTransition/WarmLightTransitionLayer';
 import './AppLayout.css';
 
@@ -23,6 +24,7 @@ export default function AppLayout({ startSoftFocusTransition }: AppLayoutProps) 
       <Outlet
         context={{ startCrystallizing, startSoftFocusTransition } satisfies AppLayoutContext}
       />
+      <SiteFooter />
       {crystallizing && (
         <CrystallizeOverlay onDone={() => setCrystallizing(false)} />
       )}

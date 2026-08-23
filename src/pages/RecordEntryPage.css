@@ -1,17 +1,18 @@
 .record-page {
+  --page-surface: #251911;
   position: fixed;
   inset: 0;
   z-index: 90;
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: #251911;
+  background: var(--page-surface);
 }
 
 .record-page-stage {
   position: relative;
-  width: min(100vw, calc(100vh * 16 / 9));
-  aspect-ratio: 16 / 9;
+  width: calc(100svh * 16 / 9);
+  height: 100svh;
   overflow: hidden;
   container-type: inline-size;
   isolation: isolate;
