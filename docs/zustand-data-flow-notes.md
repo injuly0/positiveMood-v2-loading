@@ -39,7 +39,7 @@ useRecordStore
 
 例如：
 
-- 结晶动画是否正在播放。
+- 柔焦转场是否正在播放。
 - 展示页当前处于“回顾 / 高光 / 偶遇”哪个模式。
 - 当前打开了哪条档案的详情弹窗。
 - 本次跳转刚刚创建的是哪个 entry。
@@ -227,7 +227,7 @@ archive = {
     ↓
 Persist 自动把新状态写入 localStorage
     ↓
-结晶动画播放，同时跳转展示页
+统一柔焦覆盖后归档，并跳转今日入馆页
 ```
 
 ## 四、每个业务 action 在做什么
@@ -453,28 +453,19 @@ Selector 可以理解为“从 Store 取数据并按照展示需求重新排列�
 
 ## 六、回答提交后的页面流转
 
-回答页点击提交后，业务数据和视觉过程是两条并行链路：
+回答页点击提交后，视觉转场包住业务提交和路由切换：
 
 ```text
-业务链路                         视觉链路
-commitDraft()                   startCrystallizing()
-    ↓                               ↓
-entry 写入 archive              AppLayout 播放结晶覆盖层
-    ↓                               ↓
-Persist 自动保存                跳转 /display-archive
+点击收藏按钮
+    ↓
+柔焦光斑从按钮中心扩张
+    ↓ 覆盖峰值
+commitDraft() 将 entry 写入 archive，Persist 自动保存
+    ↓
+replace 到 /today-collection/:entryId，柔光淡出
 ```
 
-展示页通过路由 state 临时接收：
-
-```ts
-createdEntryId
-```
-
-这个 ID 当前只用于给刚创建的列表项加紫色边框：
-
-- 它不属于 Persist。
-- 刷新展示页后会消失。
-- entry 本身仍然保存在 archive 中，不会因为这个临时 ID 消失而丢失。
+新条目 ID 放在稳定 URL 参数中，今日入馆页直接从 `archive.entriesById` 读取；刷新或复制链接后仍能恢复同一件馆藏。
 
 展示页自身的 `mode`、`selectedEntryId`、`surpriseEntryId` 也都是本地 UI state，刷新后重置。
 
@@ -606,7 +597,7 @@ cardVariant: QuestionCardVariant;
 | 换题、换框架、选择问题 | `src/pages/QuestionSelectionPage.tsx` |
 | 回答输入与 `commitDraft` 调用 | `src/pages/QuestionAnswerPage.tsx` |
 | 档案列表、详情、查看、擦亮和收藏 | `src/pages/DisplayArchivePage.tsx` |
-| 跨路由结晶动画状态 | `src/components/AppLayout/AppLayout.tsx` |
+| 跨路由柔焦转场状态 | `src/App.tsx` |
 | Persist 的正式设计规范 | `docs/zustand-store-design.md` |
 
 ## 最后用一句话复习

@@ -30,7 +30,7 @@
     - `ContextViewer`（置于信纸左/上半区，展示原始记录与被选中的 AI 提问）。
     - `ResponseEditor`（置于信纸右/下半区，用户最终回答输入区）。
     - `ActionSubmitButton`（提交按钮）。
-  - **核心逻辑**：回答直接写入当前草稿。提交时通过一次 `commitDraft()` 原子归档，再调用 Outlet Context 中的 `startCrystallizing()` 并跳转至展示归档页。
+  - **核心逻辑**：回答直接写入当前草稿。提交时通过 Outlet Context 启动统一柔焦转场，在覆盖峰值执行一次 `commitDraft()` 原子归档，再进入今日入馆页。
 
 ## 5. DisplayArchivePage (存储与展示容器)
   - **视图组件（按回味模式划分）**：
@@ -49,9 +49,9 @@
 
 # 三、页面跳转与路由架构
 - 使用 `react-router-dom` 框架。
-- 采用**嵌套路由架构**：顶级挂载 `<AppLayout />`。`<AppLayout />` 内部包含用于页面切换的 `<Outlet />` 以及全局常驻的 `<CrystallizeOverlay />` 动画覆盖层，以保证跨页面跳转时动画的独立与连贯。
+- 采用**嵌套路由架构**：顶级挂载 `<AppLayout />`，内部用 `<Outlet />` 切换业务页面；`AppRoutes` 外层常驻 `<WarmLightTransitionLayer />`，保证统一柔焦动画不被路由切换中断。
 
 # 四、数据持久化的方式
 - **开发阶段 V2**：使用 Zustand Persist 与 `zenflow-record-storage-v2`，`partialize` 仅持久化 `draft` 和 `archive`。
 - **旧数据**：旧 key `user-record-storage` 不再读取，本阶段不提供 `version`、`migrate` 或旧数据转换。
-- **动画**：`crystallizing` 改为常驻 `AppLayout` 的本地 state，回答页通过 Outlet Context 启动，既能跨子路由继续播放，又不会被持久化。
+- **动画**：转场 state、光源几何与定时器保留在 `AppRoutes` 的 React 本地状态中，既能跨子路由继续播放，又不会被持久化。

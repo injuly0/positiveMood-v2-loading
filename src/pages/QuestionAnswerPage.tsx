@@ -4,6 +4,7 @@ import type { AppLayoutContext } from '../components/AppLayout/AppLayout';
 import type { QuestionCardVariant } from '../data/questionCardVariants';
 import { useRecordStore } from '../store/useRecordStore';
 import { assetUrl } from '../utils/assetUrl';
+import { preloadImages } from '../utils/preloadImages';
 import './QuestionAnswerPage.css';
 
 const ASSET_ROOT = assetUrl('question-answer');
@@ -14,6 +15,15 @@ const ANSWER_ASSETS = {
   laceFrame: `${ASSET_ROOT}/lace-frame.webp`,
   questionCard: `${ASSET_ROOT}/question-card-base.webp`,
 };
+
+const TODAY_COLLECTION_ASSETS = [
+  assetUrl('today-collection/background.webp'),
+  assetUrl('today-collection/display-board.webp'),
+  assetUrl('today-collection/shadow-overlay.webp'),
+  assetUrl('today-collection/light-overlay.webp'),
+  assetUrl('today-collection/original-record-panel.png'),
+  assetUrl('today-collection/reflection-answer-panel.png'),
+] as const;
 
 const CARD_TINTS: Record<QuestionCardVariant, string> = {
   // 底色会与 38% 的暖白基础素材合成，因此使用补偿色匹配选题页最终观感。
@@ -29,8 +39,7 @@ const ANSWER_PLACEHOLDER =
 
 export default function QuestionAnswerPage() {
   const navigate = useNavigate();
-  const { startCrystallizing, startSoftFocusTransition } =
-    useOutletContext<AppLayoutContext>();
+  const { startSoftFocusTransition } = useOutletContext<AppLayoutContext>();
   const draft = useRecordStore((state) => state.draft);
   const updateDraft = useRecordStore((state) => state.updateDraft);
   const commitDraft = useRecordStore((state) => state.commitDraft);
@@ -61,6 +70,8 @@ export default function QuestionAnswerPage() {
 
   useEffect(() => {
     if (!canRenderPage) return undefined;
+
+    void preloadImages(TODAY_COLLECTION_ASSETS);
 
     const frameId = window.requestAnimationFrame(() => {
       const input = answerInputRef.current;
@@ -94,19 +105,26 @@ export default function QuestionAnswerPage() {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (event: MouseEvent<HTMLButtonElement>) => {
     if (!draft.answerText.trim() || isSubmittingRef.current) return;
 
-    // 必须在 commitDraft 之前设置；归档会同步触发当前页面重新渲染。
     isSubmittingRef.current = true;
-    const entryId = commitDraft();
-    if (!entryId) {
-      isSubmittingRef.current = false;
-      return;
-    }
+    const started = startSoftFocusTransition({
+      trigger: event.currentTarget,
+      replace: true,
+      // 柔光完全覆盖后再归档，避免清空 draft 让旧页提前消失。
+      to: () => {
+        const entryId = commitDraft();
+        return entryId ? `/today-collection/${entryId}` : null;
+      },
+      onError: () => {
+        isSubmittingRef.current = false;
+      },
+    });
 
-    startCrystallizing();
-    navigate('/display-archive', { state: { createdEntryId: entryId } });
+    if (!started) {
+      isSubmittingRef.current = false;
+    }
   };
 
   return (

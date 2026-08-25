@@ -13,3 +13,8 @@ Copyright notices embedded in the source fonts:
 - Noto Serif SC: Copyright 2017-2023 Adobe.
 
 Both fonts are distributed under the SIL Open Font License, Version 1.1. See `OFL.txt` in this directory.
+
+The directory also contains `italianno-400.woff2`, used for the dynamic
+`Collection NO.` label on the today-collection page. It is the official
+Italianno Regular webfont distributed under the SIL Open Font License,
+Version 1.1. See `OFL-Italianno.txt`.

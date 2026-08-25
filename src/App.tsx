@@ -10,6 +10,7 @@ import RecordEntryPage from './pages/RecordEntryPage';
 import QuestionSelectionPage from './pages/QuestionSelectionPage';
 import QuestionAnswerPage from './pages/QuestionAnswerPage';
 import DisplayArchivePage from './pages/DisplayArchivePage';
+import TodayCollectionPage from './pages/TodayCollectionPage';
 import AppLayout from './components/AppLayout/AppLayout';
 import WarmLightTransitionLayer, {
   type LightGeometry,
@@ -63,6 +64,7 @@ function AppRoutes() {
   const startSoftFocusTransition = useCallback<StartSoftFocusTransition>(({
     trigger,
     to,
+    replace,
     beforeNavigate,
     waitFor,
     minimumDurationMs,
@@ -125,6 +127,25 @@ function AppRoutes() {
       setShowDelayedMessage(false);
       runningRef.current = false;
     };
+    const navigateToTarget = () => {
+      try {
+        const target = typeof to === 'function' ? to() : to;
+        if (!target) {
+          onError?.();
+          setTransitionState('revealing');
+          schedule(finishTransition, timing.revealDuration);
+          return false;
+        }
+
+        navigate(target, { replace });
+        return true;
+      } catch {
+        onError?.();
+        setTransitionState('revealing');
+        schedule(finishTransition, timing.revealDuration);
+        return false;
+      }
+    };
 
     if (readiness) {
       const minimumDuration = Math.max(timing.cover, minimumDurationMs ?? timing.cover);
@@ -144,7 +165,7 @@ function AppRoutes() {
       void Promise.all([readiness, minimumReady])
         .then(async () => {
           if (!isCurrentRun()) return;
-          navigate(to);
+          if (!navigateToTarget()) return;
           await waitForRoutePaint();
           if (!isCurrentRun()) return;
           setTransitionState('revealing');
@@ -164,7 +185,7 @@ function AppRoutes() {
     void wait(timing.cover).then(async () => {
       if (!isCurrentRun()) return;
       setTransitionState('covered');
-      navigate(to);
+      if (!navigateToTarget()) return;
       await waitForRoutePaint();
       if (!isCurrentRun()) return;
       setTransitionState('revealing');
@@ -204,6 +225,7 @@ function AppRoutes() {
           <Route path="/record" element={<RecordEntryPage />} />
           <Route path="/question-selection" element={<QuestionSelectionPage />} />
           <Route path="/question-answer" element={<QuestionAnswerPage />} />
+          <Route path="/today-collection/:entryId" element={<TodayCollectionPage />} />
           <Route path="/display-archive" element={<DisplayArchivePage />} />
         </Route>
       </Routes>

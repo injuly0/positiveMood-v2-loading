@@ -68,7 +68,13 @@ Zustand 数据流与业务动作学习笔记。使用业务语言和完整示例
 
 状态：当前问题回答页视觉与功能规范。
 
-定义 1440 × 810 场景舞台、所选问题的粉绿蓝卡片颜色延续、原始记录展示、回答输入、空白引导语、重新选择、收藏提交、数据守卫与结晶转场。
+定义 1440 × 810 场景舞台、所选问题的粉绿蓝卡片颜色延续、原始记录展示、回答输入、空白引导语、重新选择、收藏提交、数据守卫与统一柔焦转场。
+
+### [`today-collection-frontend-spec.md`](today-collection-frontend-spec.md)
+
+状态：当前今日入馆页视觉与功能规范。
+
+定义问题回答提交后的只读收获页、全局递增馆藏编号、Persist 迁移、1440 × 810 场景舞台、静态亮暗光影、三个独立滚动区，以及进入馆藏/再记一刻/返回首页的路由。该规范取代问题回答页旧规范中提交后直接进入馆藏列表的目标路由约定。
 
 ### [`待改-question-selection-page-design.md`](待改-question-selection-page-design.md)
 
@@ -111,6 +117,7 @@ Qwen 框架识别后端实现规范。定义后端职责、允许返回的框架
 | 修改记录页 | `record-page-spec-v6.md`；涉及提交转场时再读 v5 转场补充与统一转场规范 |
 | 修改问题选择页 | `question-selection-frontend-spec.md`、`reflection-question-bank.md`、`zustand-store-design.md` |
 | 修改问题回答页 | `question-answer-frontend-spec.md`、`zustand-store-design.md`；涉及转场时再读统一柔光规范，`待改-question-answer-page-design.md` 仅供历史参考 |
+| 修改今日入馆页或馆藏编号 | `today-collection-frontend-spec.md`、`question-answer-frontend-spec.md`、`zustand-store-design.md`；涉及进入转场时再读统一柔光规范 |
 | 修改页面转场 | `柔光聚焦页面转场规范.md`；异步提交场景再读 v5 转场补充 |
 | 接入或修改 Qwen 后端 | `qwen-framework-backend-implementation.md`、`reflection-question-bank.md` |
 | 修改路由、资源、构建或部署 | `deployment-path-convention.md` |

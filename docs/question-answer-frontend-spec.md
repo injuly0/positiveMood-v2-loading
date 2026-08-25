@@ -3,7 +3,7 @@
 > 状态：当前已确认，作为 `QuestionAnswerPage` 后续视觉改造与功能验收的实现依据。  
 > 最终设计稿：`设计中-问题回答页 (2).png`，原始画布 `2880 × 1620`。  
 > 前端基准舞台：`1440 × 810`，即设计稿按 `50%` 等比换算。  
-> 本文覆盖页面视觉、素材、交互、状态、路由和转场；归档展示页的视觉不在本文范围内。
+> 本文覆盖页面视觉、素材、交互、状态、路由和转场；提交后的今日入馆页以 `today-collection-frontend-spec.md` 为准，归档展示页的视觉不在本文范围内。
 
 ## 1. 页面目标与已确认语义
 
@@ -367,20 +367,21 @@ const canSubmit = Boolean(draft.answerText.trim());
 ```text
 点击收藏
   → 设置本次提交运行锁
-  → commitDraft() 原子创建 MemoryEntry 并清空 draft
-  → 取得 createdEntryId
-  → AppLayout.startCrystallizing()
-  → navigate('/display-archive', { state: { createdEntryId } })
-  → CrystallizeOverlay 跨路由完成结晶动画
+  → 从“收藏这份回答”按钮中心启动统一柔焦转场
+  → 柔光完全覆盖旧页
+  → commitDraft() 原子创建 MemoryEntry、分配编号并清空 draft
+  → replace 到 `/today-collection/${createdEntryId}`
+  → 柔光淡出，揭示今日入馆页
 ```
 
 约束：
 
-- `commitDraft()` 返回 `null` 时停留当前页、释放运行锁，不启动动画。
+- `commitDraft()` 返回 `null` 时不导航，释放提交锁，并让已覆盖的柔光原地淡出。
 - 提交运行中忽略连续点击，不能创建重复档案。
-- 必须在 `commitDraft()` 前设置 `isSubmittingRef`，避免草稿同步清空后页面守卫错误重定向到 `/record`。
-- 提交成功后不使用普通柔光转场；“回答结晶为记忆”继续使用现有 `CrystallizeOverlay`。
+- 必须在启动转场前设置 `isSubmittingRef`；`commitDraft()` 只在覆盖峰值执行，避免旧页在柔光扩张期间因 draft 清空而消失。
+- 提交成功后复用项目统一柔焦转场，不再播放紫色结晶覆盖层。
 - 归档仍保存问题正文和回答正文，但不归档 `selectedCardVariant`；颜色只属于未完成草稿的跨页选择上下文。
+- `commitDraft()` 同时按 `today-collection-frontend-spec.md` 原子分配永久 `collectionNumber`；今日入馆页通过路由 ID 读取已创建条目，不从已清空的 draft 取值。
 
 ### 8.3 按钮视觉
 
@@ -450,8 +451,8 @@ const canSubmit = Boolean(draft.answerText.trim());
 
 - 问题选择页进入回答页：复用统一柔光聚焦转场。
 - 回答页返回问题选择页：复用统一柔光聚焦转场，光源为“重新选择”按钮中心。
-- 回答页提交到展示页：复用独立结晶动画，不与柔光混用。
-- `prefers-reduced-motion: reduce` 下，柔光使用统一规范的缩短时间线；结晶覆盖层也应提供无粒子飞行的快速淡入淡出替代。
+- 回答页提交到今日入馆页：复用统一柔焦转场，光源为“收藏这份回答”按钮中心。
+- `prefers-reduced-motion: reduce` 下，所有上述柔光转场均使用统一规范的缩短时间线。
 
 ### 11.2 可访问性
 
@@ -479,9 +480,9 @@ const canSubmit = Boolean(draft.answerText.trim());
   src/pages/QuestionAnswerPage.tsx
   src/pages/QuestionAnswerPage.css
 
-按需补充：
-  src/components/CrystallizeOverlay/CrystallizeOverlay.tsx
-  src/components/CrystallizeOverlay/CrystallizeOverlay.css
+复用：
+  src/components/WarmLightTransition/WarmLightTransitionLayer.tsx
+  src/components/WarmLightTransition/WarmLightTransitionLayer.css
 ```
 
 不应修改：
@@ -538,7 +539,7 @@ const canSubmit = Boolean(draft.answerText.trim());
 - [ ] 返回、换题、换框架或重新选择均不清空已有回答。
 - [ ] 空回答和纯空格回答不能提交。
 - [ ] 有效提交只创建一个档案并只导航一次。
-- [ ] 提交使用结晶转场，不叠加普通柔光。
+- [ ] 提交从按钮中心启动统一柔焦转场，不再出现紫色结晶。
 - [ ] 直接访问且无原始记录时重定向到 `/record`。
 - [ ] 有原始记录但缺少有效问题或颜色时重定向到 `/question-selection`。
 - [ ] 成功提交清空草稿时不会被守卫错误重定向。

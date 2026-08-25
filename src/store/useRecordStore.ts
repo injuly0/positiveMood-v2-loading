@@ -39,6 +39,7 @@ export interface ReflectionDraft {
 
 export interface MemoryEntry {
   id: string;
+  collectionNumber: number;
   recordText: string;
   frameworkId: FrameworkId;
   question: QuestionItem;
@@ -54,6 +55,7 @@ export interface MemoryEntry {
 export interface ArchiveState {
   entriesById: Record<string, MemoryEntry>;
   entryOrder: string[];
+  nextCollectionNumber: number;
 }
 
 export interface RecordState {
@@ -89,6 +91,7 @@ export interface RecordState {
 export const initialArchive: ArchiveState = {
   entriesById: {},
   entryOrder: [],
+  nextCollectionNumber: 1,
 };
 
 const unique = <T,>(items: readonly T[]): T[] => [...new Set(items)];
@@ -151,6 +154,81 @@ const normalizeDraft = (draft: ReflectionDraft | null | undefined): ReflectionDr
   } as ReflectionDraft;
 };
 
+type LegacyMemoryEntry = Omit<MemoryEntry, 'collectionNumber'> & {
+  collectionNumber?: number;
+};
+
+type PersistedArchiveState = {
+  entriesById?: Record<string, LegacyMemoryEntry>;
+  entryOrder?: string[];
+  nextCollectionNumber?: number;
+};
+
+const isValidCollectionNumber = (value: unknown): value is number => (
+  typeof value === 'number'
+  && Number.isInteger(value)
+  && value > 0
+);
+
+const normalizeArchive = (
+  archive: ArchiveState | PersistedArchiveState | null | undefined,
+): ArchiveState => {
+  if (!archive) return initialArchive;
+
+  const rawEntries = archive.entriesById ?? {};
+  const entryIds = Object.keys(rawEntries).filter((id) => Boolean(rawEntries[id]));
+  const orderedNewestFirst = unique(archive.entryOrder ?? [])
+    .filter((id) => Boolean(rawEntries[id]));
+  const orderedIds = new Set(orderedNewestFirst);
+  const orphanIds = entryIds
+    .filter((id) => !orderedIds.has(id))
+    .sort((leftId, rightId) => (
+      (rawEntries[leftId]?.createdAt ?? 0) - (rawEntries[rightId]?.createdAt ?? 0)
+    ));
+  const oldestFirstIds = [...orderedNewestFirst].reverse().concat(orphanIds);
+
+  // 合法旧编号优先保留；缺失、重复或非法编号再按旧到新补齐。
+  const collectionNumbersById = new Map<string, number>();
+  const usedNumbers = new Set<number>();
+  oldestFirstIds.forEach((id) => {
+    const collectionNumber = rawEntries[id]?.collectionNumber;
+    if (isValidCollectionNumber(collectionNumber) && !usedNumbers.has(collectionNumber)) {
+      collectionNumbersById.set(id, collectionNumber);
+      usedNumbers.add(collectionNumber);
+    }
+  });
+
+  let nextAvailableNumber = 1;
+  oldestFirstIds.forEach((id) => {
+    if (collectionNumbersById.has(id)) return;
+    while (usedNumbers.has(nextAvailableNumber)) nextAvailableNumber += 1;
+    collectionNumbersById.set(id, nextAvailableNumber);
+    usedNumbers.add(nextAvailableNumber);
+    nextAvailableNumber += 1;
+  });
+
+  const entriesById = oldestFirstIds.reduce<Record<string, MemoryEntry>>((entries, id) => {
+    const entry = rawEntries[id];
+    if (!entry) return entries;
+    entries[id] = {
+      ...entry,
+      collectionNumber: collectionNumbersById.get(id) ?? 1,
+    };
+    return entries;
+  }, {});
+  const maxAssignedNumber = usedNumbers.size > 0 ? Math.max(...usedNumbers) : 0;
+  const persistedNextNumber = isValidCollectionNumber(archive.nextCollectionNumber)
+    ? archive.nextCollectionNumber
+    : 1;
+
+  return {
+    entriesById,
+    entryOrder: [...oldestFirstIds].reverse(),
+    // 保留比当前最大值更大的持久计数器，避免删除最高编号后发生复用。
+    nextCollectionNumber: Math.max(persistedNextNumber, maxAssignedNumber + 1),
+  };
+};
+
 export const getEnvelopeLevel = (polishCount: number): number => {
   if (polishCount >= 10) return 4;
   if (polishCount >= 5) return 3;
@@ -177,7 +255,7 @@ export const selectHighlightEntries = (state: RecordState): MemoryEntry[] =>
 
 export const useRecordStore = create<RecordState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       draft: null,
       archive: initialArchive,
 
@@ -339,44 +417,54 @@ export const useRecordStore = create<RecordState>()(
       resetDraft: () => set({ draft: null }),
 
       commitDraft: () => {
-        const { draft } = get();
-        if (!draft) return null;
+        let createdEntryId: string | null = null;
 
-        const selectedQuestion = draft.candidateQuestions.find(
-          (question) => question.id === draft.selectedQuestionId,
-        );
-        const recordText = draft.recordText.trim();
-        const answerText = draft.answerText.trim();
-        if (!recordText || !draft.frameworkId || !selectedQuestion || !answerText) {
-          return null;
-        }
+        // 校验、编号分配、档案写入与草稿清空保持为同一次状态提交。
+        set((state) => {
+          const { draft } = state;
+          if (!draft) return state;
 
-        const entry: MemoryEntry = {
-          id: createId(),
-          recordText,
-          frameworkId: draft.frameworkId,
-          question: { ...selectedQuestion },
-          answerText,
-          createdAt: Date.now(),
-          viewCount: 0,
-          lastViewedAt: null,
-          polishCount: 0,
-          lastPolishedAt: null,
-          favoritedAt: null,
-        };
+          const selectedQuestion = draft.candidateQuestions.find(
+            (question) => question.id === draft.selectedQuestionId,
+          );
+          const recordText = draft.recordText.trim();
+          const answerText = draft.answerText.trim();
+          if (!recordText || !draft.frameworkId || !selectedQuestion || !answerText) {
+            return state;
+          }
 
-        // 档案写入与草稿清空必须保持为同一次状态提交。
-        set((state) => ({
-          draft: null,
-          archive: {
-            entriesById: {
-              ...state.archive.entriesById,
-              [entry.id]: entry,
+          const archive = normalizeArchive(state.archive);
+          const entryId = createId();
+          const entry: MemoryEntry = {
+            id: entryId,
+            collectionNumber: archive.nextCollectionNumber,
+            recordText,
+            frameworkId: draft.frameworkId,
+            question: { ...selectedQuestion },
+            answerText,
+            createdAt: Date.now(),
+            viewCount: 0,
+            lastViewedAt: null,
+            polishCount: 0,
+            lastPolishedAt: null,
+            favoritedAt: null,
+          };
+          createdEntryId = entryId;
+
+          return {
+            draft: null,
+            archive: {
+              entriesById: {
+                ...archive.entriesById,
+                [entryId]: entry,
+              },
+              entryOrder: [entryId, ...archive.entryOrder],
+              nextCollectionNumber: archive.nextCollectionNumber + 1,
             },
-            entryOrder: [entry.id, ...state.archive.entryOrder],
-          },
-        }));
-        return entry.id;
+          };
+        });
+
+        return createdEntryId;
       },
 
       viewEntry: (id) => {
@@ -440,6 +528,8 @@ export const useRecordStore = create<RecordState>()(
     }),
     {
       name: 'zenflow-record-storage-v2',
+      version: 3,
+      migrate: (persistedState) => persistedState,
       partialize: (state) => ({
         draft: state.draft,
         archive: state.archive,
@@ -450,7 +540,7 @@ export const useRecordStore = create<RecordState>()(
           ...currentState,
           ...persisted,
           draft: normalizeDraft(persisted.draft),
-          archive: persisted.archive ?? currentState.archive,
+          archive: normalizeArchive(persisted.archive ?? currentState.archive),
         };
       },
     },

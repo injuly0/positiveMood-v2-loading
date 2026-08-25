@@ -11,7 +11,8 @@ export interface SoftFocusTransitionContent {
 
 export interface SoftFocusTransitionOptions {
   trigger: HTMLElement;
-  to: string;
+  to: string | (() => string | null);
+  replace?: boolean;
   beforeNavigate?: () => void;
   waitFor?: () => Promise<void>;
   minimumDurationMs?: number;
