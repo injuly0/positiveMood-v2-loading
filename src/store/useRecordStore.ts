@@ -85,6 +85,7 @@ export interface RecordState {
   commitDraft: () => string | null;
   viewEntry: (id: string) => void;
   polishEntry: (id: string) => void;
+  polishAndTreasureEntry: (id: string) => void;
   toggleFavorite: (id: string) => void;
 }
 
@@ -500,6 +501,28 @@ export const useRecordStore = create<RecordState>()(
                   ...entry,
                   polishCount: entry.polishCount + 1,
                   lastPolishedAt: Date.now(),
+                },
+              },
+            },
+          };
+        });
+      },
+
+      polishAndTreasureEntry: (id) => {
+        set((state) => {
+          const entry = state.archive.entriesById[id];
+          if (!entry) return state;
+          const now = Date.now();
+          return {
+            archive: {
+              ...state.archive,
+              entriesById: {
+                ...state.archive.entriesById,
+                [id]: {
+                  ...entry,
+                  polishCount: entry.polishCount + 1,
+                  lastPolishedAt: now,
+                  favoritedAt: entry.favoritedAt ?? now,
                 },
               },
             },

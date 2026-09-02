@@ -23,6 +23,7 @@
 - `selectQuestion` 校验问题属于当前候选集、卡片变体与当前槽位一致，并在一次 `set` 中原子写入 `selectedQuestionId` 与 `selectedCardVariant`。
 - `commitDraft` 验证所有必填数据，在一次 `set` 中分配馆藏编号、写入新记忆、递增 `nextCollectionNumber`、将 ID 放到时间线开头并清空草稿。
 - `viewEntry`、`polishEntry` 和 `toggleFavorite` 仅更新各自负责的行为字段。
+- `polishAndTreasureEntry` 用于馆藏详情：每次原子增加擦亮次数并更新时间；首次同时写入 `favoritedAt`，已有珍藏时间保持不变，因此不会因重复擦亮而取消珍藏。
 
 信封等级由 `getEnvelopeLevel(polishCount)` 动态计算。时间线和高光列表由 selector 计算；高光顺序为收藏、擦亮次数、最近擦亮时间、创建时间。`selectedCardVariant` 只属于未完成草稿的跨页选择上下文；`MemoryEntry` 不归档颜色，也不保存其他派生视觉字段。
 

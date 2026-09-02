@@ -2,11 +2,17 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
 } from 'react';
-import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import {
+  useNavigate,
+  useOutletContext,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import type { AppLayoutContext } from '../components/AppLayout/AppLayout';
 import { useRecordStore } from '../store/useRecordStore';
 import { assetUrl } from '../utils/assetUrl';
@@ -23,6 +29,41 @@ const TODAY_COLLECTION_ASSETS = {
   originalPanel: `${ASSET_ROOT}/original-record-panel.png`,
   answerPanel: `${ASSET_ROOT}/reflection-answer-panel.png`,
 } as const;
+
+const POLISH_MOTES = [
+  [-29, -17, 0, 0.52], [31, -16, 70, 0.72], [-35, 7, 130, 0.46],
+  [37, 11, 35, 0.64], [-24, 21, 180, 0.78], [28, 24, 110, 0.5],
+  [-40, -5, 230, 0.58], [42, -1, 155, 0.82], [-13, -25, 85, 0.44],
+  [12, -27, 205, 0.68], [-4, 30, 15, 0.76], [5, 34, 250, 0.48],
+  [-33, -25, 290, 0.66], [35, -28, 270, 0.42], [-44, 18, 310, 0.7],
+  [46, 22, 335, 0.56], [-18, 31, 355, 0.62], [20, 35, 380, 0.8],
+] as const;
+
+function PolishLightBurst({ burstKey }: { burstKey: number }) {
+  if (burstKey === 0) return null;
+
+  return (
+    <div
+      key={burstKey}
+      className="today-collection-polish-burst"
+      aria-hidden="true"
+    >
+      {POLISH_MOTES.map(([x, y, delay, size], index) => (
+        <span
+          key={`${burstKey}-${index}`}
+          className={`today-collection-polish-mote today-collection-polish-mote-${index % 3}`}
+          style={{
+            '--mote-x': `${x}cqw`,
+            '--mote-y': `${y}cqw`,
+            '--mote-delay': `${delay}ms`,
+            '--mote-size': `${size}cqw`,
+          } as CSSProperties}
+        />
+      ))}
+      <span className="today-collection-polish-halo" />
+    </div>
+  );
+}
 
 interface ReadOnlyScrollPanelProps {
   assetSrc: string;
@@ -109,12 +150,18 @@ const getDatePresentation = (timestamp: number) => {
 export default function TodayCollectionPage() {
   const navigate = useNavigate();
   const { entryId } = useParams<{ entryId: string }>();
+  const [searchParams] = useSearchParams();
   const { startSoftFocusTransition } = useOutletContext<AppLayoutContext>();
   const entry = useRecordStore((state) => (
     entryId ? state.archive.entriesById[entryId] : undefined
   ));
   const transitionRunningRef = useRef(false);
   const [transitioning, setTransitioning] = useState(false);
+  const [polishing, setPolishing] = useState(false);
+  const [polishBurstKey, setPolishBurstKey] = useState(0);
+  const polishTimerRef = useRef<number | null>(null);
+  const polishAndTreasureEntry = useRecordStore((state) => state.polishAndTreasureEntry);
+  const fromArchive = searchParams.get('from') === 'archive';
 
   useEffect(() => {
     if (!entry) {
@@ -127,6 +174,12 @@ export default function TodayCollectionPage() {
       document.fonts?.load('33px Italianno'),
       document.fonts?.load('500 48px "Noto Serif SC"'),
     ]);
+  }, []);
+
+  useEffect(() => () => {
+    if (polishTimerRef.current !== null) {
+      window.clearTimeout(polishTimerRef.current);
+    }
   }, []);
 
   if (!entry) return null;
@@ -152,6 +205,17 @@ export default function TodayCollectionPage() {
 
     transitionRunningRef.current = true;
     setTransitioning(true);
+  };
+
+  const handlePolish = () => {
+    if (polishing || !entryId) return;
+    polishAndTreasureEntry(entryId);
+    setPolishing(true);
+    setPolishBurstKey((value) => value + 1);
+    polishTimerRef.current = window.setTimeout(() => {
+      polishTimerRef.current = null;
+      setPolishing(false);
+    }, 1250);
   };
 
   return (
@@ -244,34 +308,61 @@ export default function TodayCollectionPage() {
           draggable="false"
         />
 
-        <nav className="today-collection-actions" aria-label="今日入馆后续操作">
-          <button
-            type="button"
-            className="today-collection-action today-collection-enter-archive"
-            disabled={transitioning}
-            onClick={(event) => handleNavigate(event, '/display-archive')}
-          >
-            <span aria-hidden="true">←</span>
-            进入馆藏
-          </button>
-          <button
-            type="button"
-            className="today-collection-action today-collection-record-again"
-            disabled={transitioning}
-            onClick={(event) => handleNavigate(event, '/record')}
-          >
-            再记一刻
-          </button>
-          <button
-            type="button"
-            className="today-collection-action today-collection-return-home"
-            disabled={transitioning}
-            onClick={(event) => handleNavigate(event, '/')}
-          >
-            返回首页
-            <span aria-hidden="true">→</span>
-          </button>
-        </nav>
+        <PolishLightBurst burstKey={polishBurstKey} />
+
+        {fromArchive ? (
+          <nav className="today-collection-actions is-archive-detail" aria-label="馆藏详情操作">
+            <button
+              type="button"
+              className="today-collection-action today-collection-enter-archive"
+              disabled={transitioning}
+              onClick={(event) => handleNavigate(event, '/display-archive')}
+            >
+              <span aria-hidden="true">←</span>
+              返回馆藏
+            </button>
+            <button
+              type="button"
+              className={`today-collection-action today-collection-polish${polishing ? ' is-polishing' : ''}`}
+              disabled={polishing || transitioning}
+              onClick={handlePolish}
+            >
+              擦亮并珍藏
+            </button>
+            <span className="today-collection-polish-status" aria-live="polite">
+              {polishing ? `已擦亮，第 ${entry.polishCount} 次光芒已收入馆藏` : ''}
+            </span>
+          </nav>
+        ) : (
+          <nav className="today-collection-actions" aria-label="今日入馆后续操作">
+            <button
+              type="button"
+              className="today-collection-action today-collection-enter-archive"
+              disabled={transitioning}
+              onClick={(event) => handleNavigate(event, '/display-archive')}
+            >
+              <span aria-hidden="true">←</span>
+              进入馆藏
+            </button>
+            <button
+              type="button"
+              className="today-collection-action today-collection-record-again"
+              disabled={transitioning}
+              onClick={(event) => handleNavigate(event, '/record')}
+            >
+              再记一刻
+            </button>
+            <button
+              type="button"
+              className="today-collection-action today-collection-return-home"
+              disabled={transitioning}
+              onClick={(event) => handleNavigate(event, '/')}
+            >
+              返回首页
+              <span aria-hidden="true">→</span>
+            </button>
+          </nav>
+        )}
       </article>
     </main>
   );

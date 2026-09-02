@@ -76,6 +76,12 @@ Zustand 数据流与业务动作学习笔记。使用业务语言和完整示例
 
 定义问题回答提交后的只读收获页、全局递增馆藏编号、Persist 迁移、1440 × 810 场景舞台、静态亮暗光影、三个独立滚动区，以及进入馆藏/再记一刻/返回首页的路由。该规范取代问题回答页旧规范中提交后直接进入馆藏列表的目标路由约定。
 
+### [`display-archive-frontend-spec.md`](display-archive-frontend-spec.md)
+
+状态：当前馆藏展示页视觉与功能规范。
+
+定义 `/display-archive` 的 1440 × 810 托架场景、真实月份筛选、时间线/随机逛逛/珍藏记忆三种模式、固定五卡位窗口、按卡片数量切换的阴影资产、一次一格抽顿翻页、卡片抽起详情衔接和空状态。
+
 ### [`待改-question-selection-page-design.md`](待改-question-selection-page-design.md)
 
 状态：历史稿，已停止作为实现依据。
@@ -95,6 +101,18 @@ Zustand 数据流与业务动作学习笔记。使用业务语言和完整示例
 项目统一的页面转场规范。定义从点击触发点扩散的柔光、四个转场状态、时间线、视觉参数、可访问性和跨路由实现边界。
 
 ## 5. AI 与后端契约
+
+### [`backend-data-analytics-mvp-spec.md`](backend-data-analytics-mvp-spec.md)
+
+状态：已确认，作为邀请制后端、服务端馆藏持久化和埋点分析 MVP 的实施依据。
+
+定义 FastAPI + SQLite 单机架构、邀请码激活和账号会话、草稿与馆藏的数据归属、SQLite 表结构、服务端馆藏编号事务、事件与指标口径、API 边界、隐私安全、备份和验收标准。题库仍由前端静态维护，现有浏览器测试馆藏不迁移。
+
+### [`backend-auth-first-deployment-plan.md`](backend-auth-first-deployment-plan.md)
+
+状态：已确认，作为后端第一轮实施、服务器实验和首页最小认证接入的执行顺序。
+
+定义邀请码激活而非永久邀请码登录、SSH 管理命令而非公网管理员接口、首页内测说明与最小认证层、认证后端 A～F 分阶段交付、真实服务器实验清单、后续馆藏/埋点/Qwen 顺序和第一轮完成条件。
 
 ### [`qwen-framework-backend-implementation.md`](qwen-framework-backend-implementation.md)
 
@@ -118,6 +136,9 @@ Qwen 框架识别后端实现规范。定义后端职责、允许返回的框架
 | 修改问题选择页 | `question-selection-frontend-spec.md`、`reflection-question-bank.md`、`zustand-store-design.md` |
 | 修改问题回答页 | `question-answer-frontend-spec.md`、`zustand-store-design.md`；涉及转场时再读统一柔光规范，`待改-question-answer-page-design.md` 仅供历史参考 |
 | 修改今日入馆页或馆藏编号 | `today-collection-frontend-spec.md`、`question-answer-frontend-spec.md`、`zustand-store-design.md`；涉及进入转场时再读统一柔光规范 |
+| 修改馆藏展示页 | `display-archive-frontend-spec.md`、`today-collection-frontend-spec.md`、`zustand-store-design.md`；涉及详情转场时再读统一柔光规范 |
 | 修改页面转场 | `柔光聚焦页面转场规范.md`；异步提交场景再读 v5 转场补充 |
+| 第一轮实现邀请认证并部署实验 | `backend-auth-first-deployment-plan.md`、`backend-data-analytics-mvp-spec.md`、`deployment-path-convention.md` |
+| 实现账号、馆藏服务端持久化或埋点 | `backend-data-analytics-mvp-spec.md`；涉及 Qwen 时再读 `qwen-framework-backend-implementation.md` |
 | 接入或修改 Qwen 后端 | `qwen-framework-backend-implementation.md`、`reflection-question-bank.md` |
 | 修改路由、资源、构建或部署 | `deployment-path-convention.md` |
